@@ -195,20 +195,19 @@ class FineGAN_trainer(object):
         self.num_batches = len(self.data_loader)
 
 
-
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
 
         real_vfimgs, real_vcimgs = [], []
         if cfg.CUDA:
             vc_code = Variable(c_code).cuda()
-	    for i in range(len(warped_bbox)):
-		warped_bbox[i] = Variable(warped_bbox[i]).float().cuda()
+            for i in range(len(warped_bbox)):
+                warped_bbox[i] = Variable(warped_bbox[i]).float().cuda()
 
         else:
             vc_code = Variable(c_code)
-	    for i in range(len(warped_bbox)):
-		warped_bbox[i] = Variable(warped_bbox[i])
+            for i in range(len(warped_bbox)):
+                warped_bbox[i] = Variable(warped_bbox[i])
 
         if cfg.CUDA:
             real_vfimgs.append(Variable(fimgs[0]).cuda())
