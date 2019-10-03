@@ -223,90 +223,90 @@ class FineGAN_trainer(object):
             flag = count % 100
             batch_size = self.real_fimgs[0].size(0)
             criterion, criterion_one = self.criterion, self.criterion_one
+
             netD, optD = self.netsD[idx], self.optimizersD[idx]
+            if idx == 0:
+                real_imgs = self.real_fimgs[0]
 
-        if idx == 0:
-            real_imgs = self.real_fimgs[0]
-
-        elif idx == 2:
-            real_imgs = self.real_cimgs[0]
+            elif idx == 2:
+                real_imgs = self.real_cimgs[0]
 
             fake_imgs = self.fake_imgs[idx]
             netD.zero_grad()
             real_logits = netD(real_imgs)
 
-        if idx == 2:
-            fake_labels = torch.zeros_like(real_logits[1])
-            real_labels = torch.ones_like(real_logits[1])
+            if idx == 2:
+                fake_labels = torch.zeros_like(real_logits[1])
+                real_labels = torch.ones_like(real_logits[1])
 
-        elif idx == 0:
+            elif idx == 0:
 
-            fake_labels = torch.zeros_like(real_logits[1])
-            ext, output = real_logits
-            weights_real = torch.ones_like(output)
-            real_labels = torch.ones_like(output)
+                fake_labels = torch.zeros_like(real_logits[1])
+                ext, output = real_logits
+                weights_real = torch.ones_like(output)
+                real_labels = torch.ones_like(output)
 
-            for i in range(batch_size):
-                x1 =  self.warped_bbox[0][i]
-                x2 =  self.warped_bbox[2][i]
-                y1 =  self.warped_bbox[1][i]
-                y2 =  self.warped_bbox[3][i]
+                for i in range(batch_size):
+                    x1 =  self.warped_bbox[0][i]
+                    x2 =  self.warped_bbox[2][i]
+                    y1 =  self.warped_bbox[1][i]
+                    y2 =  self.warped_bbox[3][i]
 
-                a1 = max(torch.tensor(0).float().cuda(), torch.ceil((x1 - self.recp_field)/self.patch_stride))
-                a2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - x2)/self.patch_stride)) + 1
-                b1 = max(torch.tensor(0).float().cuda(), torch.ceil((y1 - self.recp_field)/self.patch_stride))
-                b2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - y2)/self.patch_stride)) + 1
+                    a1 = max(torch.tensor(0).float().cuda(), torch.ceil((x1 - self.recp_field)/self.patch_stride))
+                    a2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - x2)/self.patch_stride)) + 1
+                    b1 = max(torch.tensor(0).float().cuda(), torch.ceil((y1 - self.recp_field)/self.patch_stride))
+                    b2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - y2)/self.patch_stride)) + 1
 
-                if (x1 != x2 and y1 != y2):
-                    weights_real[i, :, a1.type(torch.int) : a2.type(torch.int) , b1.type(torch.int) : b2.type(torch.int)] = 0.0
+                    if (x1 != x2 and y1 != y2):
+                        weights_real[i, :, a1.type(torch.int) : a2.type(torch.int) , b1.type(torch.int) : b2.type(torch.int)] = 0.0
 
-            norm_fact_real = weights_real.sum()
-            norm_fact_fake = weights_real.shape[0]*weights_real.shape[1]*weights_real.shape[2]*weights_real.shape[3]
-            real_logits = ext, output
+                norm_fact_real = weights_real.sum()
+                norm_fact_fake = weights_real.shape[0]*weights_real.shape[1]*weights_real.shape[2]*weights_real.shape[3]
+                real_logits = ext, output
 
-        fake_logits = netD(fake_imgs.detach())
+            fake_logits = netD(fake_imgs.detach())
 
 
 
-        if idx == 0: # Background stage
+            if idx == 0: # Background stage
 
-            errD_real_uncond = criterion(real_logits[1], real_labels)  # Real/Fake loss for 'real background' (on patch level)
-            errD_real_uncond = torch.mul(errD_real_uncond, weights_real)  # Masking output units which correspond to receptive fields which lie within the boundin box
-            errD_real_uncond = errD_real_uncond.mean()
+                errD_real_uncond = criterion(real_logits[1], real_labels)  # Real/Fake loss for 'real background' (on patch level)
+                errD_real_uncond = torch.mul(errD_real_uncond, weights_real)  # Masking output units which correspond to receptive fields which lie within the boundin box
+                errD_real_uncond = errD_real_uncond.mean()
 
-            errD_real_uncond_classi = criterion(real_logits[0], weights_real)  # Background/foreground classification loss
-            errD_real_uncond_classi = errD_real_uncond_classi.mean()
+                errD_real_uncond_classi = criterion(real_logits[0], weights_real)  # Background/foreground classification loss
+                errD_real_uncond_classi = errD_real_uncond_classi.mean()
 
-            errD_fake_uncond = criterion(fake_logits[1], fake_labels)  # Real/Fake loss for 'fake background' (on patch level)
-            errD_fake_uncond = errD_fake_uncond.mean()
+                errD_fake_uncond = criterion(fake_logits[1], fake_labels)  # Real/Fake loss for 'fake background' (on patch level)
+                errD_fake_uncond = errD_fake_uncond.mean()
 
-            if (norm_fact_real > 0):    # Normalizing the real/fake loss for background after accounting the number of masked members in the output.
-                errD_real = errD_real_uncond * ((norm_fact_fake * 1.0) /(norm_fact_real * 1.0))
-            else:
-                errD_real = errD_real_uncond
+                if (norm_fact_real > 0):    # Normalizing the real/fake loss for background after accounting the number of masked members in the output.
+                    errD_real = errD_real_uncond * ((norm_fact_fake * 1.0) /(norm_fact_real * 1.0))
+                else:
+                    errD_real = errD_real_uncond
 
-            errD_fake = errD_fake_uncond
-            errD = ((errD_real + errD_fake) * cfg.TRAIN.BG_LOSS_WT) + errD_real_uncond_classi
+                errD_fake = errD_fake_uncond
+                errD = ((errD_real + errD_fake) * cfg.TRAIN.BG_LOSS_WT) + errD_real_uncond_classi
 
-        if idx == 2:
+            if idx == 2:
 
-            errD_real = criterion_one(real_logits[1], real_labels) # Real/Fake loss for the real image
-            errD_fake = criterion_one(fake_logits[1], fake_labels) # Real/Fake loss for the fake image
-            errD = errD_real + errD_fake
+                errD_real = criterion_one(real_logits[1], real_labels) # Real/Fake loss for the real image
+                errD_fake = criterion_one(fake_logits[1], fake_labels) # Real/Fake loss for the fake image
+                errD = errD_real + errD_fake
 
-        if (idx == 0 or idx == 2):
-              errD.backward()
-              optD.step()
+            if idx == 0 or idx == 2:
+                errD.backward()
+                optD.step()
 
-        if (flag == 0):
-            summary_D = summary.scalar('D_loss%d' % idx, errD.data[0])
-            self.summary_writer.add_summary(summary_D, count)
-            summary_D_real = summary.scalar('D_loss_real_%d' % idx, errD_real.data[0])
-            self.summary_writer.add_summary(summary_D_real, count)
-            summary_D_fake = summary.scalar('D_loss_fake_%d' % idx, errD_fake.data[0])
-            self.summary_writer.add_summary(summary_D_fake, count)
+            if flag == 0:
+                summary_D = summary.scalar('D_loss%d' % idx, errD.data[0])
+                self.summary_writer.add_summary(summary_D, count)
+                summary_D_real = summary.scalar('D_loss_real_%d' % idx, errD_real.data[0])
+                self.summary_writer.add_summary(summary_D_real, count)
+                summary_D_fake = summary.scalar('D_loss_fake_%d' % idx, errD_fake.data[0])
+                self.summary_writer.add_summary(summary_D_fake, count)
 
-        return errD
+            return errD
 
     def train_Gnet(self, count):
         self.netG.zero_grad()
