@@ -120,7 +120,13 @@ class INIT_STAGE_G(nn.Module):
     def forward(self, z_code, code):
 
         in_code = torch.cat((code, z_code), 1)
+
+        print(in_code.size())
+
         out_code = self.fc(in_code)
+
+        print(out_code.size())
+
         out_code = out_code.view(-1, self.gf_dim, 4, 4)
 
         print(out_code.size())
