@@ -326,18 +326,18 @@ class D_NET(nn.Module):
         self.stg_no = stg_no
 
         if self.stg_no  == 0:
-                self.ef_dim = 1
+            self.ef_dim = 1
         elif self.stg_no == 1:
-                self.ef_dim = cfg.SUPER_CATEGORIES
+            self.ef_dim = cfg.SUPER_CATEGORIES
         elif self.stg_no == 2:
-                self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
+            self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
         else:
-                print ("Invalid stage number. Set stage number as follows:")
-                print ("0 - for background stage")
-                print ("1 - for parent stage")
-                print ("2 - for child stage")
-                print ("...Exiting now")
-                sys.exit(0)
+            print ("Invalid stage number. Set stage number as follows:")
+            print ("0 - for background stage")
+            print ("1 - for parent stage")
+            print ("2 - for child stage")
+            print ("...Exiting now")
+            sys.exit(0)
         self.define_module()
 
     def define_module(self):
@@ -345,44 +345,42 @@ class D_NET(nn.Module):
         efg = self.ef_dim
 
         if self.stg_no == 0:
-
-                self.patchgan_img_code_s16 = encode_background_img(ndf)
-                self.uncond_logits1 = nn.Sequential(
-                nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
-                nn.Sigmoid())
-                self.uncond_logits2 = nn.Sequential(
-                nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
-                nn.Sigmoid())
+            self.patchgan_img_code_s16 = encode_background_img(ndf)
+            self.uncond_logits1 = nn.Sequential(
+            nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
+            nn.Sigmoid())
+            self.uncond_logits2 = nn.Sequential(
+            nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
+            nn.Sigmoid())
 
         else:
-                self.img_code_s16 = encode_parent_and_child_img(ndf)
-                self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
-                self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
+            self.img_code_s16 = encode_parent_and_child_img(ndf)
+            self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
+            self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
 
-                self.logits = nn.Sequential(
-                    nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
+            self.logits = nn.Sequential(
+                nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
 
-                self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
-                self.uncond_logits = nn.Sequential(
-                nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
-                nn.Sigmoid())
+            self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
+            self.uncond_logits = nn.Sequential(
+            nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
+            nn.Sigmoid())
 
 
     def forward(self, x_var):
-
         if self.stg_no == 0:
-                x_code = self.patchgan_img_code_s16(x_var)
-                classi_score = self.uncond_logits1(x_code) # Background vs Foreground classification score (0 - background and 1 - foreground)
-                rf_score = self.uncond_logits2(x_code) # Real/Fake score for the background image
-                return [classi_score, rf_score]
+            x_code = self.patchgan_img_code_s16(x_var)
+            classi_score = self.uncond_logits1(x_code) # Background vs Foreground classification score (0 - background and 1 - foreground)
+            rf_score = self.uncond_logits2(x_code) # Real/Fake score for the background image
+            return [classi_score, rf_score]
 
         elif self.stg_no > 0:
-                x_code = self.img_code_s16(x_var)
-                x_code = self.img_code_s32(x_code)
-                x_code = self.img_code_s32_1(x_code)
-                h_c_code = self.jointConv(x_code)
-                code_pred = self.logits(h_c_code) # Predicts the parent code and child code in parent and child stage respectively
-                rf_score = self.uncond_logits(x_code) # This score is not used in parent stage while training
-                return [code_pred.view(-1, self.ef_dim), rf_score.view(-1)]
+            x_code = self.img_code_s16(x_var)
+            x_code = self.img_code_s32(x_code)
+            x_code = self.img_code_s32_1(x_code)
+            h_c_code = self.jointConv(x_code)
+            code_pred = self.logits(h_c_code) # Predicts the parent code and child code in parent and child stage respectively
+            rf_score = self.uncond_logits(x_code) # This score is not used in parent stage while training
+            return [code_pred.view(-1, self.ef_dim), rf_score.view(-1)]
 
 
