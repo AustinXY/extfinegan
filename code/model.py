@@ -122,11 +122,28 @@ class INIT_STAGE_G(nn.Module):
         in_code = torch.cat((code, z_code), 1)
         out_code = self.fc(in_code)
         out_code = out_code.view(-1, self.gf_dim, 4, 4)
+
+        print(out_code.size())
+
         out_code = self.upsample1(out_code)
+
+        print(out_code.size())
+
         out_code = self.upsample2(out_code)
+
+        print(out_code.size())
+
         out_code = self.upsample3(out_code)
+
+        print(out_code.size())
+
         out_code = self.upsample4(out_code)
+
+        print(out_code.size())
+
         out_code = self.upsample5(out_code)
+
+        print(out_code.size())
 
         return out_code
 
@@ -202,7 +219,7 @@ class G_NET(nn.Module):
         super(G_NET, self).__init__()
         self.gf_dim = cfg.GAN.GF_DIM
         self.define_module()
-        self.upsampling = Upsample(scale_factor = 2, mode = 'bilinear')
+        self.upsampling = Upsample(scale_factor=2, mode='bilinear')
         self.scale_fimg = nn.UpsamplingBilinear2d(size = [126, 126])
 
     def define_module(self):
@@ -213,7 +230,7 @@ class G_NET(nn.Module):
 
         # Parent stage networks
         self.h_net1 = INIT_STAGE_G(self.gf_dim * 16, 1)
-        self.h_net2 = NEXT_STAGE_G(self.gf_dim, use_hrc = 1)
+        self.h_net2 = NEXT_STAGE_G(self.gf_dim, use_hrc=1)
         self.img_net2 = GET_IMAGE_G(self.gf_dim // 2)  # Parent foreground generation network
         self.img_net2_mask= GET_MASK_G(self.gf_dim // 2) # Parent mask generation network
 
