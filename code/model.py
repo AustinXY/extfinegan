@@ -206,11 +206,11 @@ class G_NET(nn.Module):
     def define_module(self):
 
         #Background stage
-        self.h_net1_bg = INIT_STAGE_G(self.gf_dim * 16, 2)
+        self.h_net1_bg = INIT_STAGE_G(self.gf_dim * 16, c_flag=2)
         self.img_net1_bg = GET_IMAGE_G(self.gf_dim) # Background generation network
 
         # Parent stage networks
-        self.h_net1 = INIT_STAGE_G(self.gf_dim * 16, 1)
+        self.h_net1 = INIT_STAGE_G(self.gf_dim * 16, c_flag=1)
         self.h_net2 = NEXT_STAGE_G(self.gf_dim, use_hrc=1)
         self.img_net2 = GET_IMAGE_G(self.gf_dim // 2)  # Parent foreground generation network
         self.img_net2_mask= GET_MASK_G(self.gf_dim // 2) # Parent mask generation network
