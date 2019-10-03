@@ -1,0 +1,20 @@
+DATASET_NAME: 'casia'
+SAVE_DIR: '../eval_out/'
+GPU_ID: '3'
+WORKERS: 1  # 4
+
+SUPER_CATEGORIES: 25     # For CUB
+FINE_GRAINED_CATEGORIES: 250   # For CUB
+
+TIED_CODES: False
+
+TRAIN:
+    FLAG: False
+    NET_G: '../output/casia_2019_09_15_17_57_23/Model/netG_360000.pth'
+    BATCH_SIZE: 1
+
+GAN:
+    DF_DIM: 64
+    GF_DIM: 64
+    Z_DIM: 100
+    R_NUM: 2

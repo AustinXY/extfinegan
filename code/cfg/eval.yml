@@ -1,0 +1,23 @@
+DATASET_NAME: 'casia'
+SAVE_DIR: '../eval_out/'
+GPU_ID: '0'
+WORKERS: 1  # 4
+
+SUPER_CATEGORIES: 25     # For CUB
+FINE_GRAINED_CATEGORIES: 250   # For CUB
+TEST_CHILD_CLASS: 200      # specify any value [0, FINE_GRAINED_CATEGORIES - 1]
+TEST_PARENT_CLASS: 20      # specify any value [0, SUPER_CATEGORIES - 1]
+TEST_BACKGROUND_CLASS: 25  # specify any value [0, FINE_GRAINED_CATEGORIES - 1]
+TIED_CODES: False
+
+TRAIN:
+    FLAG: False
+    NET_G: '../netG_360000.pth'
+    BATCH_SIZE: 1
+
+
+GAN:
+    DF_DIM: 64
+    GF_DIM: 64
+    Z_DIM: 100
+    R_NUM: 2
