@@ -118,39 +118,14 @@ class INIT_STAGE_G(nn.Module):
 
 
     def forward(self, z_code, code):
-
         in_code = torch.cat((code, z_code), 1)
-
-        print(in_code.size())
-
         out_code = self.fc(in_code)
-
-        print(out_code.size())
-
         out_code = out_code.view(-1, self.gf_dim, 4, 4)
-
-        print(out_code.size())
-
         out_code = self.upsample1(out_code)
-
-        print(out_code.size())
-
         out_code = self.upsample2(out_code)
-
-        print(out_code.size())
-
         out_code = self.upsample3(out_code)
-
-        print(out_code.size())
-
         out_code = self.upsample4(out_code)
-
-        print(out_code.size())
-
         out_code = self.upsample5(out_code)
-
-        print(out_code.size())
-
         return out_code
 
 
