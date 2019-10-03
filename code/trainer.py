@@ -238,6 +238,7 @@ class FineGAN_trainer(object):
         if idx == 2:
             fake_labels = torch.zeros_like(real_logits[1])
             real_labels = torch.ones_like(real_logits[1])
+
         elif idx == 0:
 
             fake_labels = torch.zeros_like(real_logits[1])
