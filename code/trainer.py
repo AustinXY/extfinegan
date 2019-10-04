@@ -302,7 +302,6 @@ class FineGAN_trainer(object):
                 errD = ((errD_real + errD_fake) * cfg.TRAIN.BG_LOSS_WT) + errD_real_uncond_classi
 
             if idx == 2:
-
                 errD_real = criterion_one(real_logits[1], real_labels) # Real/Fake loss for the real image
                 errD_fake = criterion_one(fake_logits[1], fake_labels) # Real/Fake loss for the fake image
                 errD = errD_real + errD_fake
@@ -459,6 +458,17 @@ class FineGAN_trainer(object):
 
                     self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
                         self.netG(fixed_noise, self.c_code)
+
+                    print(self.fake_imgs.len())
+                    print(self.fg_imgs.len())
+                    print(self.mk_imgs.len())
+                    print(self.fg_mk.len())
+                    print(self.pt_mk.len())
+                    print(self.fake_imgs[0].size())
+                    print(self.fg_imgs[0].size())
+                    print(self.mk_imgs[0].size())
+                    print(self.fg_mk[0].size())
+                    print(self.pt_mk[0].size())
 
                     save_img_results(self.imgs_tcpu,
                                     (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk +
