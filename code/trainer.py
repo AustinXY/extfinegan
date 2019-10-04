@@ -364,26 +364,33 @@ class FineGAN_trainer(object):
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total += errG_info
             elif i == 3: # Mutual information loss for the part stage (3)
+                pti_loss = []
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
                     pred_pti = self.netsD[3](self.pt_masked[pt])[0]
-                    print(pred_pti.data[0])
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total += errG_info
+
+                    pti_loss.append(errG_info)
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
 
             if flag == 0:
-                if i > 0:
+                if i == 1 or i == 2:
                     summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 0 or i == 2:
                     summary_D = summary.scalar('G_loss%d' % i, errG.data[0])
                     self.summary_writer.add_summary(summary_D, count)
+
+                if i == 3:
+                    for j in range(cfg.NUM_PARTS):
+                        summary_D_class = summary.scalar('Part%d_Information_loss_%d' % (j, i), pti_loss[j])
+                        self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
