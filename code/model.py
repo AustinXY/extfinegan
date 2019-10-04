@@ -285,9 +285,8 @@ class G_NET(nn.Module):
         C_m = torch.zeros([batch_size, 1, 128, 128]).cuda()
 
         for i in range(cfg.NUM_PARTS):
-            pti_code = torch.zeros([batch_size, cfg.NUM_PARTS])
+            pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
             pti_code[:, i] = 1
-            pti_code = pti_code.cuda()
 
             h_code4 = self.h_net4(h_code2, pti_code)
             Pti_f = self.img_net4(h_code4) # Part foreground
