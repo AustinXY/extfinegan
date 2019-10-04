@@ -427,8 +427,7 @@ class FineGAN_trainer(object):
                 # Feedforward through Generator. Obtain stagewise fake images
                 noise.data.normal_(0, 1)
 
-                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk,
-                self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
                     self.netG(noise, self.c_code)
 
                 # Obtain the parent code given the child code
@@ -454,8 +453,7 @@ class FineGAN_trainer(object):
                     # Save images
                     load_params(self.netG, avg_param_G)
 
-                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk,
-                    self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
                         self.netG(fixed_noise, self.c_code)
 
                     save_img_results(self.imgs_tcpu,
