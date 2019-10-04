@@ -130,7 +130,7 @@ class INIT_STAGE_G(nn.Module):
 
 
 class NEXT_STAGE_G(nn.Module):
-    def __init__(self, ngf, use_hrc, outf=ngf//2, num_residual=cfg.GAN.R_NUM):
+    def __init__(self, ngf, use_hrc, outf=0, num_residual=cfg.GAN.R_NUM):
         """
         outf : out features
         """
@@ -144,6 +144,9 @@ class NEXT_STAGE_G(nn.Module):
 
         else:                            # For part stage
             self.ef_dim = cfg.NUM_PARTS
+
+        if outf == 0:
+            outf = ngf // 2
 
         self.num_residual = num_residual
         self.define_module()
