@@ -459,11 +459,11 @@ class FineGAN_trainer(object):
                     self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
                         self.netG(fixed_noise, self.c_code)
 
-                    print(self.fake_imgs.len())
-                    print(self.fg_imgs.len())
-                    print(self.mk_imgs.len())
-                    print(self.fg_mk.len())
-                    print(self.pt_mk.len())
+                    print(len(self.fake_imgs))
+                    print(len(self.fg_imgs))
+                    print(len(self.mk_imgs))
+                    print(len(self.fg_mk))
+                    print(len(self.pt_mk))
                     print(self.fake_imgs[0].size())
                     print(self.fg_imgs[0].size())
                     print(self.mk_imgs[0].size())
