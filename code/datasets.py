@@ -50,9 +50,9 @@ def get_imgs(img_path, imsize, bbox=None,
         y2 = np.minimum(height, center_y + r)
         x1 = np.maximum(0, center_x - r)
         x2 = np.minimum(width, center_x + r)
-	fimg = deepcopy(img)
-	fimg_arr = np.array(fimg)
-	fimg = Image.fromarray(fimg_arr)
+        fimg = deepcopy(img)
+        fimg_arr = np.array(fimg)
+        fimg = Image.fromarray(fimg_arr)
         cimg = img.crop([x1, y1, x2, y2])
 
     if transform is not None:
@@ -182,8 +182,8 @@ class Dataset(data.Dataset):
                         bbox, self.transform, normalize=self.norm)
 
         rand_class= random.sample(range(cfg.FINE_GRAINED_CATEGORIES),1); # Randomly generating child code during training
-	c_code = torch.zeros([cfg.FINE_GRAINED_CATEGORIES,])
-	c_code[rand_class] = 1
+        c_code = torch.zeros([cfg.FINE_GRAINED_CATEGORIES,])
+        c_code[rand_class] = 1
 
         return fimgs, cimgs, c_code, key, warped_bbox
 

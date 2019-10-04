@@ -30,7 +30,7 @@ from model import G_NET, D_NET
 def child_to_parent(child_c_code, classes_child, classes_parent):
 
     ratio = classes_child / classes_parent
-    arg_parent = torch.argmax(child_c_code,  dim = 1) / ratio
+    arg_parent = torch.argmax(child_c_code, dim=1) / ratio
     parent_c_code = torch.zeros([child_c_code.size(0), classes_parent]).cuda()
     for i in range(child_c_code.size(0)):
         parent_c_code[i][arg_parent[i]] = 1
@@ -338,7 +338,7 @@ class FineGAN_trainer(object):
                 pred_c = self.netsD[i](self.fg_mk[i-1])
                 errG_info = criterion_class(pred_c[0], torch.nonzero(c_code.long())[:,1])
 
-            if(i>0):
+            if i > 0:
                 errG_total = errG_total + errG_info
 
             if flag == 0:
@@ -414,7 +414,7 @@ class FineGAN_trainer(object):
                 # Update Discriminator networks
                 errD_total = 0
                 for i in range(self.num_Ds):
-                    if i == 0 or i == 2: # only at parent and child stage
+                    if i == 0 or i == 2: # only at backgroud and child stage
                         errD = self.train_Dnet(i, count)
                         errD_total += errD
 
@@ -448,7 +448,7 @@ class FineGAN_trainer(object):
 
         save_model(self.netG, avg_param_G, self.netsD, count, self.model_dir)
 
-	print ("Done with the normal training. Now performing hard negative training..")
+        print ("Done with the normal training. Now performing hard negative training..")
         count = 0
         start_t = time.time()
         for step, data in enumerate(self.data_loader, 0):

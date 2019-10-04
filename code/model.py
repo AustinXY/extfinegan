@@ -130,14 +130,20 @@ class INIT_STAGE_G(nn.Module):
 
 
 class NEXT_STAGE_G(nn.Module):
-    def __init__(self, ngf, use_hrc = 1, num_residual=cfg.GAN.R_NUM):
+    def __init__(self, ngf, use_hrc, outf=ngf//2, num_residual=cfg.GAN.R_NUM):
+        """
+        outf : out features
+        """
         super(NEXT_STAGE_G, self).__init__()
         self.gf_dim = ngf
-        if use_hrc == 1: # For parent stage
+        if use_hrc == 1:                 # For parent stage
             self.ef_dim = cfg.SUPER_CATEGORIES
 
-        else:            # For child stage
+        elif use_hrc == 0:            # For child stage
             self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
+
+        else:                            # For part stage
+            self.ef_dim = cfg.NUM_PARTS
 
         self.num_residual = num_residual
         self.define_module()
@@ -153,7 +159,7 @@ class NEXT_STAGE_G(nn.Module):
         efg = self.ef_dim
         self.jointConv = Block3x3_relu(ngf + efg, ngf)
         self.residual = self._make_layer(ResBlock, ngf)
-        self.samesample = sameBlock(ngf, ngf // 2)
+        self.samesample = sameBlock(ngf, outf)
 
     def forward(self, h_code, code):
         s_size = h_code.size(2)
@@ -192,7 +198,7 @@ class GET_MASK_G(nn.Module):
 
     def forward(self, h_code):
         out_img = self.img(h_code)
-	return out_img
+        return out_img
 
 
 class G_NET(nn.Module):
@@ -216,28 +222,36 @@ class G_NET(nn.Module):
         self.img_net2_mask= GET_MASK_G(self.gf_dim // 2) # Parent mask generation network
 
         # Child stage networks
-        self.h_net3 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc = 0)
-        self.img_net3 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
-        self.img_net3_mask = GET_MASK_G(self.gf_dim // 4) # Child mask generation network
+        self.h_net3 = NEXT_STAGE_G(self.gf_dim // 4, use_hrc=0)
+        self.img_net3 = GET_IMAGE_G(self.gf_dim // 8) # Child foreground generation network
+        self.img_net3_mask = GET_MASK_G(self.gf_dim // 8) # Child mask generation network
 
-    def forward(self, z_code, c_code, p_code = None, bg_code = None):
+        # Part stage networks
+        self.h_net4 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=2)
+        self.img_net4 = GET_IMAGE_G(self.gf_dim // 4) # Part foreground generation network
+        self.img_net4_mask = GET_MASK_G(self.gf_dim // 4) # Part mask generation network
+
+    def forward(self, z_code, c_code, p_code=None, bg_code=None):
 
         fake_imgs = [] # Will contain [background image, parent image, child image]
         fg_imgs = [] # Will contain [parent foreground, child foreground]
         mk_imgs = [] # Will contain [parent mask, child mask]
         fg_mk = [] # Will contain [masked parent foreground, masked child foreground]
+        pt_imgs = [] # Will contain [Pt1, Pt2]
+        c_mk = [] # will contain [C1m, C2m, ...]
+        c_fg = [] # will contain [C1f, C2f, ...]
 
         if cfg.TIED_CODES:
             p_code = child_to_parent(c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES) # Obtaining the parent code from child code
             bg_code = c_code
 
-        #Background stage
+        # Background stage
         h_code1_bg = self.h_net1_bg(z_code, bg_code)
         fake_img1 = self.img_net1_bg(h_code1_bg) # Background image
         fake_img1_126 = self.scale_fimg(fake_img1) # Resizing fake background image from 128x128 to the resolution which background discriminator expects: 126 x 126.
         fake_imgs.append(fake_img1_126)
 
-        #Parent stage
+        # Parent stage
         h_code1 = self.h_net1(z_code, p_code)
         h_code2 = self.h_net2(h_code1, p_code)
         fake_img2_foreground = self.img_net2(h_code2) # Parent foreground
@@ -252,19 +266,49 @@ class G_NET(nn.Module):
         fg_imgs.append(fake_img2_foreground)
         mk_imgs.append(fake_img2_mask)
 
-        #Child stage
-        h_code3 = self.h_net3(h_code2, c_code)
-        fake_img3_foreground = self.img_net3(h_code3) # Child foreground
-        fake_img3_mask = self.img_net3_mask(h_code3) # Child mask
-        ones_mask_c = torch.ones_like(fake_img3_mask)
-        opp_mask_c = ones_mask_c - fake_img3_mask
-        fg_masked3 = torch.mul(fake_img3_foreground, fake_img3_mask)
-        fg_mk.append(fg_masked3)
-        bg_masked3 = torch.mul(fake_img2_final, opp_mask_c)
-        fake_img3_final = fg_masked3 + bg_masked3  # Child image
-        fake_imgs.append(fake_img3_final)
-        fg_imgs.append(fake_img3_foreground)
-        mk_imgs.append(fake_img3_mask)
+        # Part stage
+        s_gpus = cfg.GPU_ID.split(',')
+        gpus = [int(ix) for ix in s_gpus]
+        num_gpus = len(gpus)
+        batch_size = cfg.TRAIN.BATCH_SIZE * num_gpus
+
+        child_foreground = torch.zeros([3, 126, 126])
+        child_mask = torch.zeros([1, 126, 126])
+
+        for pt in range(cfg.NUM_PARTS):
+            pt_code = torch.zeros([batch_size, cfg.NUM_PARTS])
+            pt_code[:, pt] = 1
+
+            h_code4 = self.h_net4(h_code2, pt_code)
+            pt_foreground = self.img_net4(h_code4) # Part foreground
+            pt_mask = self.img_net4_mask(h_code4) # Part mask
+
+            ones_mask_pt = torch.ones_like(pt_mask)
+            opp_mask_pt = ones_mask_pt - pt_mask
+            pt_masked = torch.mul(pt_foreground, pt_mask)
+            pt_imgs.append(pt_masked)
+
+            # Child stage
+            h_code3 = self.h_net3(h_code4, c_code)
+            c_foreground = self.img_net3(h_code3) # Child foreground
+            c_mask = self.img_net3_mask(h_code3) # Child mask
+            c_fg_masked = torch.mul(c_foreground, c_mask)
+
+            child_mask += c_mask
+            child_foreground += c_fg_masked
+
+        child_mask = torch.clamp(child_mask, 0, 1)
+        mk_imgs.append(child_mask)
+        # child_foreground = torch.clamp(child_foreground, -1, 1)
+        fg_mk.append(child_foreground)
+
+        ones_mask_c = torch.ones_like(child_mask)
+        opp_mask_c = ones_mask_c - child_mask
+
+
+
+
+
 
         return fake_imgs, fg_imgs, mk_imgs, fg_mk
 
