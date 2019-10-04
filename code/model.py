@@ -96,9 +96,9 @@ class INIT_STAGE_G(nn.Module):
         self.c_flag= c_flag
 
         if self.c_flag==1 :
-                self.in_dim = cfg.GAN.Z_DIM + cfg.SUPER_CATEGORIES
+            self.in_dim = cfg.GAN.Z_DIM + cfg.SUPER_CATEGORIES
         elif self.c_flag==2:
-                self.in_dim = cfg.GAN.Z_DIM + cfg.FINE_GRAINED_CATEGORIES
+            self.in_dim = cfg.GAN.Z_DIM + cfg.FINE_GRAINED_CATEGORIES
 
         self.define_module()
 
@@ -138,7 +138,7 @@ class NEXT_STAGE_G(nn.Module):
         if use_hrc == 1:                 # For parent stage
             self.ef_dim = cfg.SUPER_CATEGORIES
 
-        elif use_hrc == 0:            # For child stage
+        elif use_hrc == 0:               # For child stage
             self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
 
         else:                            # For part stage
@@ -167,8 +167,11 @@ class NEXT_STAGE_G(nn.Module):
 
     def forward(self, h_code, code):
         s_size = h_code.size(2)
+        print(s_size)
         code = code.view(-1, self.ef_dim, 1, 1)
+        print(code.data)
         code = code.repeat(1, 1, s_size, s_size)
+        print(code.size())
         h_c_code = torch.cat((code, h_code), 1)
         out_code = self.jointConv(h_c_code)
         out_code = self.residual(out_code)
