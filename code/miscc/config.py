@@ -28,6 +28,7 @@ __C.TEST_CHILD_CLASS = 0
 __C.TEST_PARENT_CLASS = 0
 __C.TEST_BACKGROUND_CLASS = 0
 __C.TIED_CODES = True
+__C.NUM_PARTS = 4
 
 # Test options
 __C.TEST = edict()
