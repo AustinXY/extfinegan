@@ -233,17 +233,13 @@ class G_NET(nn.Module):
 
     def forward(self, z_code, c_code, p_code=None, bg_code=None):
 
-        fake_imgs = []  # Will contain [B_126, P, C]
-        fg_imgs = []  # Will contain [P_f]
-        mk_imgs = []  # Will contain [P_m, C_m]
-        fg_mk = []  # Will contain [P_masked, C_masked]
-
-        pt_mk = []  # Will contain [Pt1_m, Pt2_m, ...]
-        pt_fg = []  # Will contain [Pt1_f, Pt2_f, ...]
-        pt_masked = []  # Will contain [Pt1_masked, Pt2_masked, ...]
-        c_mk = []  # will contain [C1_m, C2_m, ...]
-        c_fg = []  # will contain [C1_f, C2_f, ...]
-        c_masked = []  # Will contain [C1_masked, C2_masked, ...]
+        fake_imgs = [] # Will contain [background image, parent image, child image]
+        fg_imgs = [] # Will contain [parent foreground, child foreground]
+        mk_imgs = [] # Will contain [parent mask, child mask]
+        fg_mk = [] # Will contain [masked parent foreground, masked child foreground]
+        pt_imgs = [] # Will contain [Pt1, Pt2]
+        c_mk = [] # will contain [C1m, C2m, ...]
+        c_fg = [] # will contain [C1f, C2f, ...]
 
         if cfg.TIED_CODES:
             p_code = child_to_parent(c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES) # Obtaining the parent code from child code
@@ -251,25 +247,24 @@ class G_NET(nn.Module):
 
         # Background stage
         h_code1_bg = self.h_net1_bg(z_code, bg_code)
-        B = self.img_net1_bg(h_code1_bg) # Background image
-        B_126 = self.scale_fimg(B) # Resizing fake background image from 128x128 to the resolution which background discriminator expects: 126 x 126.
-        fake_imgs.append(B_126)
+        fake_img1 = self.img_net1_bg(h_code1_bg) # Background image
+        fake_img1_126 = self.scale_fimg(fake_img1) # Resizing fake background image from 128x128 to the resolution which background discriminator expects: 126 x 126.
+        fake_imgs.append(fake_img1_126)
 
         # Parent stage
         h_code1 = self.h_net1(z_code, p_code)
         h_code2 = self.h_net2(h_code1, p_code)
-
-        P_f = self.img_net2(h_code2) # Parent foreground
-        P_m = self.img_net2_mask(h_code2) # Parent mask
-        ones_mask_p = torch.ones_like(P_m)
-        opp_mask_p = ones_mask_p - P_m
-        P_masked = torch.mul(P_f, P_m) # Parent foreground masked
-        fg_mk.append(P_masked)
-        B_masked = torch.mul(B, opp_mask_p)
-        P = P_masked + B_masked # Parent image
-        fake_imgs.append(P)
-        fg_imgs.append(P_f)
-        mk_imgs.append(P_m)
+        fake_img2_foreground = self.img_net2(h_code2) # Parent foreground
+        fake_img2_mask = self.img_net2_mask(h_code2) # Parent mask
+        ones_mask_p = torch.ones_like(fake_img2_mask)
+        opp_mask_p = ones_mask_p - fake_img2_mask
+        fg_masked2 = torch.mul(fake_img2_foreground, fake_img2_mask)
+        fg_mk.append(fg_masked2)
+        bg_masked2 = torch.mul(fake_img1, opp_mask_p)
+        fake_img2_final = fg_masked2 + bg_masked2 # Parent image
+        fake_imgs.append(fake_img2_final)
+        fg_imgs.append(fake_img2_foreground)
+        mk_imgs.append(fake_img2_mask)
 
         # Part stage
         s_gpus = cfg.GPU_ID.split(',')
@@ -277,48 +272,45 @@ class G_NET(nn.Module):
         num_gpus = len(gpus)
         batch_size = cfg.TRAIN.BATCH_SIZE * num_gpus
 
-        C_masked = torch.zeros([3, 126, 126])
-        C_m = torch.zeros([1, 126, 126])
+        child_foreground = torch.zeros([3, 126, 126])
+        child_mask = torch.zeros([1, 126, 126])
 
-        for i in range(cfg.NUM_PARTS):
-            pti_code = torch.zeros([batch_size, cfg.NUM_PARTS])
-            pti_code[:, i] = 1
+        for pt in range(cfg.NUM_PARTS):
+            pt_code = torch.zeros([batch_size, cfg.NUM_PARTS])
+            pt_code[:, pt] = 1
 
-            h_code4 = self.h_net4(h_code2, pti_code)
-            Pti_f = self.img_net4(h_code4) # Part foreground
-            Pti_m = self.img_net4_mask(h_code4) # Part mask
-            Pti_masked = torch.mul(Pti_f, Pti_m) # Part foreground masked
+            h_code4 = self.h_net4(h_code2, pt_code)
+            pt_foreground = self.img_net4(h_code4) # Part foreground
+            pt_mask = self.img_net4_mask(h_code4) # Part mask
 
-            pt_fg.append(Pti_f)
-            pt_mk.append(Pti_m)
-            pt_masked.append(Pti_masked)
+            ones_mask_pt = torch.ones_like(pt_mask)
+            opp_mask_pt = ones_mask_pt - pt_mask
+            pt_masked = torch.mul(pt_foreground, pt_mask)
+            pt_imgs.append(pt_masked)
 
             # Child stage
             h_code3 = self.h_net3(h_code4, c_code)
-            Ci_f = self.img_net3(h_code3) # Child part i foreground
-            Ci_m = self.img_net3_mask(h_code3) # Child part i mask
-            Ci_masked = torch.mul(Ci_f, Ci_m) # Child part i foreground masked
+            c_foreground = self.img_net3(h_code3) # Child foreground
+            c_mask = self.img_net3_mask(h_code3) # Child mask
+            c_fg_masked = torch.mul(c_foreground, c_mask)
 
-            c_fg.append(Ci_f)
-            c_mk.append(Ci_m)
-            c_masked.append(Ci_masked)
+            child_mask += c_mask
+            child_foreground += c_fg_masked
 
-            C_m += Ci_m
-            C_masked += Ci_masked
+        child_mask = torch.clamp(child_mask, 0, 1)
+        mk_imgs.append(child_mask)
+        # child_foreground = torch.clamp(child_foreground, -1, 1)
+        fg_mk.append(child_foreground)
 
-        C_m = torch.clamp(C_m, 0, 1)
-        mk_imgs.append(C_m)
-        # C_masked = torch.clamp(C_masked, -1, 1)
-        fg_mk.append(C_masked)
+        ones_mask_c = torch.ones_like(child_mask)
+        opp_mask_c = ones_mask_c - child_mask
 
-        ones_mask_c = torch.ones_like(C_m)
-        opp_mask_c = ones_mask_c - C_m
-        P_bg_masked = torch.mul(P, opp_mask_c)
-        C = C_masked + P_bg_masked
 
-        fake_imgs.append(C)
 
-        return fake_imgs, fg_imgs, mk_imgs, fg_mk, pt_mk, pt_fg, pt_masked, c_mk, c_fg, c_masked
+
+
+
+        return fake_imgs, fg_imgs, mk_imgs, fg_mk
 
 
 # ############## D networks ################################################
@@ -383,14 +375,11 @@ class D_NET(nn.Module):
             self.ef_dim = cfg.SUPER_CATEGORIES
         elif self.stg_no == 2:
             self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
-        elif self.stag_no == 3:
-            self.ef_dim = cfg.NUM_PARTS
         else:
             print ("Invalid stage number. Set stage number as follows:")
             print ("0 - for background stage")
             print ("1 - for parent stage")
             print ("2 - for child stage")
-            print ("3 - for part stage")
             print ("...Exiting now")
             sys.exit(0)
         self.define_module()

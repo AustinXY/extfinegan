@@ -66,7 +66,7 @@ def load_network(gpus):
     print(netG)
 
     netsD = []
-    for i in range(4): # 4 discriminators for background, parent, part and child stage
+    for i in range(3): # 3 discriminators for background, parent and child stage
         netsD.append(D_NET(i))
 
     for i in range(len(netsD)):
@@ -114,23 +114,16 @@ def define_optimizers(netG, netsD):
                             betas=(0.5, 0.999)))
 
     for i in range(num_Ds):
-        if i == 1: # Parent
-            opt = optim.Adam(netsD[1].parameters(),
-            lr=cfg.TRAIN.GENERATOR_LR,
-            betas=(0.5, 0.999))
-            optimizerG.append(opt)
-
-        elif i == 3:
-            opt = optim.Adam(netsD[3].parameters(),
-            lr=cfg.TRAIN.GENERATOR_LR,
-            betas=(0.5, 0.999))
-            optimizerG.append(opt)
-
-        elif i == 2: # Child
-            opt = optim.Adam([{'params':netsD[i].module.jointConv.parameters()},{'params':netsD[i].module.logits.parameters()}],
-            lr=cfg.TRAIN.GENERATOR_LR,
-            betas=(0.5, 0.999))
-            optimizerG.append(opt)
+        if i==1:
+                opt = optim.Adam(netsD[i].parameters(),
+                lr=cfg.TRAIN.GENERATOR_LR,
+                betas=(0.5, 0.999))
+                optimizerG.append(opt)
+        elif i==2:
+                opt = optim.Adam([{'params':netsD[i].module.jointConv.parameters()},{'params':netsD[i].module.logits.parameters()}],
+                lr=cfg.TRAIN.GENERATOR_LR,
+                betas=(0.5, 0.999))
+                optimizerG.append(opt)
 
     return optimizerG, optimizersD
 
@@ -151,7 +144,6 @@ def save_model(netG, avg_param_G, netsD, epoch, model_dir):
 def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
                      count, image_dir, summary_writer):
     num = cfg.TRAIN.VIS_COUNT
-    npt = cfg.NUM_PARTS
 
     real_img = imgs_tcpu[-1][0:num]
     vutils.save_image(
@@ -163,23 +155,18 @@ def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
     real_img_set = real_img_set.astype(np.uint8)
 
     for i in range(len(fake_imgs)):
-        if i < 8:
-            fake_img = fake_imgs[i][0:num]
-
-        else:
-            fake_img = fake_imgs[i:i+npt][0:num]
-            i += 3
+        fake_img = fake_imgs[i][0:num]
 
         vutils.save_image(
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
             (image_dir, count, i), normalize=True)
 
-        # fake_img_set = vutils.make_grid(fake_img.data).cpu().numpy()
+        fake_img_set = vutils.make_grid(fake_img.data).cpu().numpy()
 
-        # fake_img_set = np.transpose(fake_img_set, (1, 2, 0))
-        # fake_img_set = (fake_img_set + 1) * 255 / 2
-        # fake_img_set = fake_img_set.astype(np.uint8)
-        # summary_writer.flush()
+        fake_img_set = np.transpose(fake_img_set, (1, 2, 0))
+        fake_img_set = (fake_img_set + 1) * 255 / 2
+        fake_img_set = fake_img_set.astype(np.uint8)
+        summary_writer.flush()
 
 
 
@@ -253,6 +240,7 @@ class FineGAN_trainer(object):
                 real_labels = torch.ones_like(real_logits[1])
 
             elif idx == 0:
+
                 fake_labels = torch.zeros_like(real_logits[1])
                 ext, output = real_logits
                 weights_real = torch.ones_like(output)
@@ -277,6 +265,7 @@ class FineGAN_trainer(object):
                 real_logits = ext, output
 
             fake_logits = netD(fake_imgs.detach())
+
 
 
             if idx == 0: # Background stage
@@ -343,24 +332,14 @@ class FineGAN_trainer(object):
             errG_total = errG_total + errG
 
             if i == 1: # Mutual information loss for the parent stage (1)
-                pred_p = self.netsD[1](self.fg_mk[0])[0]
-                errG_info = criterion_class(pred_p, torch.nonzero(p_code.long())[:,1])
-                errG_total += errG_info
+                pred_p = self.netsD[i](self.fg_mk[i-1])
+                errG_info = criterion_class(pred_p[0], torch.nonzero(p_code.long())[:,1])
             elif i == 2: # Mutual information loss for the child stage (2)
-                pred_c = self.netsD[2](self.fg_mk[1])[0]
-                errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
-                errG_total += errG_info
-            elif i == 3: # Mutual information loss for the part stage (3)
-                for i in range(cfg.NUM_PARTS):
-                    pti_code = torch.zeros([batch_size, cfg.NUM_PARTS])
-                    pti_code[:, i] = 1
+                pred_c = self.netsD[i](self.fg_mk[i-1])
+                errG_info = criterion_class(pred_c[0], torch.nonzero(c_code.long())[:,1])
 
-                    pred_pti = self.netsD[3](self.pt_masked[i])[0]
-                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total += errG_info
-
-            # if i > 0:
-            #     errG_total = errG_total + errG_info
+            if i > 0:
+                errG_total = errG_total + errG_info
 
             if flag == 0:
                 if i > 0:
@@ -426,9 +405,7 @@ class FineGAN_trainer(object):
 
                 # Feedforward through Generator. Obtain stagewise fake images
                 noise.data.normal_(0, 1)
-
-                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk,
-                self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
                     self.netG(noise, self.c_code)
 
                 # Obtain the parent code given the child code
@@ -454,14 +431,10 @@ class FineGAN_trainer(object):
                     # Save images
                     load_params(self.netG, avg_param_G)
 
-                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk,
-                    self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
                         self.netG(fixed_noise, self.c_code)
-
-                    save_img_results(self.imgs_tcpu,
-                                    (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk +
-                                    self.pt_mk + self.pt_fg + self.pt_masked + self.c_mk + self.c_fg + self.c_masked),
-                                    self.num_Ds, count, self.image_dir, self.summary_writer)
+                    save_img_results(self.imgs_tcpu, (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk), self.num_Ds,
+                                     count, self.image_dir, self.summary_writer)
                     #
                     load_params(self.netG, backup_para)
 
@@ -475,107 +448,107 @@ class FineGAN_trainer(object):
 
         save_model(self.netG, avg_param_G, self.netsD, count, self.model_dir)
 
-        # print ("Done with the normal training. Now performing hard negative training..")
-        # count = 0
-        # start_t = time.time()
-        # for step, data in enumerate(self.data_loader, 0):
+        print ("Done with the normal training. Now performing hard negative training..")
+        count = 0
+        start_t = time.time()
+        for step, data in enumerate(self.data_loader, 0):
 
-        #     self.imgs_tcpu, self.real_fimgs, self.real_cimgs, \
-        #         self.c_code, self.warped_bbox = self.prepare_data(data)
+            self.imgs_tcpu, self.real_fimgs, self.real_cimgs, \
+                self.c_code, self.warped_bbox = self.prepare_data(data)
 
-        #     if (count % 2) == 0: # Train on normal batch of images
+            if (count % 2) == 0: # Train on normal batch of images
 
-        #             # Feedforward through Generator. Obtain stagewise fake images
-        #             noise.data.normal_(0, 1)
-        #             self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
-        #                 self.netG(noise, self.c_code)
+                    # Feedforward through Generator. Obtain stagewise fake images
+                    noise.data.normal_(0, 1)
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
+                        self.netG(noise, self.c_code)
 
-        #             self.p_code = child_to_parent(self.c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES)
+                    self.p_code = child_to_parent(self.c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES)
 
-        #             # Update discriminator networks
-        #             errD_total = 0
-        #             for i in range(self.num_Ds):
-        #                     if i == 0 or i == 2:
-        #                             errD = self.train_Dnet(i, count)
-        #                             errD_total += errD
+                    # Update discriminator networks
+                    errD_total = 0
+                    for i in range(self.num_Ds):
+                            if i == 0 or i == 2:
+                                    errD = self.train_Dnet(i, count)
+                                    errD_total += errD
 
 
-        #             # Update the generator network
-        #             errG_total = self.train_Gnet(count)
+                    # Update the generator network
+                    errG_total = self.train_Gnet(count)
 
-        #     else: # Train on degenerate images
-        #             repeat_times=10
-        #             all_hard_z = Variable(torch.zeros(self.batch_size * repeat_times, nz)).cuda()
-        #             all_hard_class = Variable(torch.zeros(self.batch_size * repeat_times, cfg.FINE_GRAINED_CATEGORIES)).cuda()
-        #             all_logits = Variable(torch.zeros(self.batch_size * repeat_times,)).cuda()
+            else: # Train on degenerate images
+                    repeat_times=10
+                    all_hard_z = Variable(torch.zeros(self.batch_size * repeat_times, nz)).cuda()
+                    all_hard_class = Variable(torch.zeros(self.batch_size * repeat_times, cfg.FINE_GRAINED_CATEGORIES)).cuda()
+                    all_logits = Variable(torch.zeros(self.batch_size * repeat_times,)).cuda()
 
-        #             for hard_it in range(repeat_times):
-        #                     hard_noise = hard_noise.data.normal_(0,1)
-        #                     hard_class = Variable(torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])).cuda()
-        #                     my_rand_id=[]
+                    for hard_it in range(repeat_times):
+                            hard_noise = hard_noise.data.normal_(0,1)
+                            hard_class = Variable(torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])).cuda()
+                            my_rand_id=[]
 
-        #                     for c_it in range(self.batch_size):
-        #                             rand_class = random.sample(range(cfg.FINE_GRAINED_CATEGORIES),1);
-        #                             hard_class[c_it][rand_class] = 1
-        #                             my_rand_id.append(rand_class)
+                            for c_it in range(self.batch_size):
+                                    rand_class = random.sample(range(cfg.FINE_GRAINED_CATEGORIES),1);
+                                    hard_class[c_it][rand_class] = 1
+                                    my_rand_id.append(rand_class)
 
-        #                     all_hard_z[self.batch_size * hard_it : self.batch_size * (hard_it + 1)] = hard_noise.data
-        #                     all_hard_class[self.batch_size * hard_it : self.batch_size * (hard_it + 1)] = hard_class.data
-        #                     self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = self.netG(hard_noise.detach(), hard_class.detach())
+                            all_hard_z[self.batch_size * hard_it : self.batch_size * (hard_it + 1)] = hard_noise.data
+                            all_hard_class[self.batch_size * hard_it : self.batch_size * (hard_it + 1)] = hard_class.data
+                            self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = self.netG(hard_noise.detach(), hard_class.detach())
 
-        #                     fake_logits = self.netsD[2](self.fg_mk[1].detach())
-        #                     smax_class = softmax(fake_logits[0], dim = 1)
+                            fake_logits = self.netsD[2](self.fg_mk[1].detach())
+                            smax_class = softmax(fake_logits[0], dim = 1)
 
-        #                     for b_it in range(self.batch_size):
-        #                             all_logits[(self.batch_size * hard_it) + b_it] = smax_class[b_it][my_rand_id[b_it]]
+                            for b_it in range(self.batch_size):
+                                    all_logits[(self.batch_size * hard_it) + b_it] = smax_class[b_it][my_rand_id[b_it]]
 
-        #             sorted_val, indices_hard = torch.sort(all_logits)
-        #             noise = all_hard_z[indices_hard[0 : self.batch_size]]
-        #             self.c_code = all_hard_class[indices_hard[0 : self.batch_size]]
+                    sorted_val, indices_hard = torch.sort(all_logits)
+                    noise = all_hard_z[indices_hard[0 : self.batch_size]]
+                    self.c_code = all_hard_class[indices_hard[0 : self.batch_size]]
 
-        #             self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
-        #                 self.netG(noise, self.c_code)
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
+                        self.netG(noise, self.c_code)
 
-        #             self.p_code = child_to_parent(self.c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES)
+                    self.p_code = child_to_parent(self.c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES)
 
-        #             # Update Discriminator networks
-        #             errD_total = 0
-        #             for i in range(self.num_Ds):
-        #                     if i == 0 or i == 2:
-        #                             errD = self.train_Dnet(i, count)
-        #                             errD_total += errD
+                    # Update Discriminator networks
+                    errD_total = 0
+                    for i in range(self.num_Ds):
+                            if i == 0 or i == 2:
+                                    errD = self.train_Dnet(i, count)
+                                    errD_total += errD
 
-        #             # Update generator network
-        #             errG_total = self.train_Gnet(count)
+                    # Update generator network
+                    errG_total = self.train_Gnet(count)
 
-        #     for p, avg_p in zip(self.netG.parameters(), avg_param_G):
-        #                 avg_p.mul_(0.999).add_(0.001, p.data)
-        #     count = count + 1
+            for p, avg_p in zip(self.netG.parameters(), avg_param_G):
+                        avg_p.mul_(0.999).add_(0.001, p.data)
+            count = count + 1
 
-        #     if count % cfg.TRAIN.SNAPSHOT_INTERVAL_HARDNEG == 0:
-        #         backup_para = copy_G_params(self.netG)
-        #         save_model(self.netG, avg_param_G, self.netsD, count+500000, self.model_dir)
-        #         load_params(self.netG, avg_param_G)
+            if count % cfg.TRAIN.SNAPSHOT_INTERVAL_HARDNEG == 0:
+                backup_para = copy_G_params(self.netG)
+                save_model(self.netG, avg_param_G, self.netsD, count+500000, self.model_dir)
+                load_params(self.netG, avg_param_G)
 
-        #         self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
-        #             self.netG(fixed_noise, self.c_code)
-        #         save_img_results(self.imgs_tcpu, (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk), self.num_Ds,
-        #                          count, self.image_dir, self.summary_writer)
-        #         #
-        #         load_params(self.netG, backup_para)
+                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk = \
+                    self.netG(fixed_noise, self.c_code)
+                save_img_results(self.imgs_tcpu, (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk), self.num_Ds,
+                                 count, self.image_dir, self.summary_writer)
+                #
+                load_params(self.netG, backup_para)
 
-        #     end_t = time.time()
+            end_t = time.time()
 
-        #     if (count % 100) == 0:
-        #         print('''[%d/%d][%d]
-        #                      Loss_D: %.2f Loss_G: %.2f Time: %.2fs
-        #                   '''
-        #               % (count, cfg.TRAIN.HARDNEG_MAX_ITER, self.num_batches,
-        #                  errD_total.data[0], errG_total.data[0],
-        #                  end_t - start_t))
+            if (count % 100) == 0:
+                print('''[%d/%d][%d]
+                             Loss_D: %.2f Loss_G: %.2f Time: %.2fs
+                          '''
+                      % (count, cfg.TRAIN.HARDNEG_MAX_ITER, self.num_batches,
+                         errD_total.data[0], errG_total.data[0],
+                         end_t - start_t))
 
-        #     if (count == cfg.TRAIN.HARDNEG_MAX_ITER): # Hard negative training complete
-        #             break
+            if (count == cfg.TRAIN.HARDNEG_MAX_ITER): # Hard negative training complete
+                    break
 
         save_model(self.netG, avg_param_G, self.netsD, count, self.model_dir)
         self.summary_writer.close()
