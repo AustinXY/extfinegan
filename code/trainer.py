@@ -172,15 +172,15 @@ def save_img_results(imgs_tcpu, fake_imgs, pt_fake_imgs, num_imgs,
     for i in range(6):
         fake_img = pt_fake_imgs[i*npt][0:num]
 
-        print(fake_img.size())
+        # print(fake_img.size())
 
         for j in range(1, npt):
 
-            print(pt_fake_imgs[i*npt+j][0:num].size())
+            # print(pt_fake_imgs[i*npt+j][0:num].size())
 
             fake_img = torch.cat((fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
 
-        print("out")
+        # print("out")
 
         vutils.save_image(
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
