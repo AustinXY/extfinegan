@@ -331,16 +331,18 @@ class FineGAN_trainer(object):
 
         for i in range(self.num_Ds):
 
-            outputs = self.netsD[i](self.fake_imgs[i])
+            if i < 3:
 
-            if i == 0 or i == 2:  # real/fake loss for background (0) and child (2) stage
-                real_labels = torch.ones_like(outputs[1])
-                errG = criterion_one(outputs[1], real_labels)
-            if i==0:
-                errG = errG * cfg.TRAIN.BG_LOSS_WT
-                errG_classi = criterion_one(outputs[0], real_labels) # Background/Foreground classification loss for the fake background image (on patch level)
-                errG = errG + errG_classi
-            errG_total = errG_total + errG
+                outputs = self.netsD[i](self.fake_imgs[i])
+
+                if i == 0 or i == 2:  # real/fake loss for background (0) and child (2) stage
+                    real_labels = torch.ones_like(outputs[1])
+                    errG = criterion_one(outputs[1], real_labels)
+                if i==0:
+                    errG = errG * cfg.TRAIN.BG_LOSS_WT
+                    errG_classi = criterion_one(outputs[0], real_labels) # Background/Foreground classification loss for the fake background image (on patch level)
+                    errG = errG + errG_classi
+                errG_total = errG_total + errG
 
             if i == 1: # Mutual information loss for the parent stage (1)
                 pred_p = self.netsD[1](self.fg_mk[0])[0]
