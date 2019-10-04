@@ -135,7 +135,6 @@ class NEXT_STAGE_G(nn.Module):
         outf : out features
         """
         super(NEXT_STAGE_G, self).__init__()
-        self.gf_dim = ngf
         if use_hrc == 1:                 # For parent stage
             self.ef_dim = cfg.SUPER_CATEGORIES
 
@@ -148,6 +147,8 @@ class NEXT_STAGE_G(nn.Module):
         if outf == 0:
             outf = ngf // 2
 
+        self.gf_dim = ngf
+        self.out_dim = outf
         self.num_residual = num_residual
         self.define_module()
 
@@ -162,7 +163,7 @@ class NEXT_STAGE_G(nn.Module):
         efg = self.ef_dim
         self.jointConv = Block3x3_relu(ngf + efg, ngf)
         self.residual = self._make_layer(ResBlock, ngf)
-        self.samesample = sameBlock(ngf, outf)
+        self.samesample = sameBlock(ngf, self.out_dim)
 
     def forward(self, h_code, code):
         s_size = h_code.size(2)
