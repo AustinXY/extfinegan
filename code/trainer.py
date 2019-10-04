@@ -369,6 +369,7 @@ class FineGAN_trainer(object):
                     pti_code[:, pt] = 1
 
                     pred_pti = self.netsD[3](self.pt_masked[pt])[0]
+                    print(pred_pti.data)
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total += errG_info
 
