@@ -387,7 +387,7 @@ class D_NET(nn.Module):
             self.ef_dim = cfg.SUPER_CATEGORIES
         elif self.stg_no == 2:
             self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
-        elif self.stag_no == 3:
+        elif self.stg_no == 3:
             self.ef_dim = cfg.NUM_PARTS
         else:
             print ("Invalid stage number. Set stage number as follows:")
