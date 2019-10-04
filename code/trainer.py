@@ -157,18 +157,20 @@ def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
     vutils.save_image(
         real_img, '%s/real_samples%09d.png' % (image_dir,count),
         normalize=True)
-    real_img_set = vutils.make_grid(real_img).numpy()
-    real_img_set = np.transpose(real_img_set, (1, 2, 0))
-    real_img_set = real_img_set * 255
-    real_img_set = real_img_set.astype(np.uint8)
+    # real_img_set = vutils.make_grid(real_img).numpy()
+    # real_img_set = np.transpose(real_img_set, (1, 2, 0))
+    # real_img_set = real_img_set * 255
+    # real_img_set = real_img_set.astype(np.uint8)
 
     for i in range(len(fake_imgs)):
         if i < 8:
             fake_img = fake_imgs[i][0:num]
 
         else:
-            fake_img = fake_imgs[i:i+npt][0:num]
-            i += 3
+            fake_img = fake_imgs[i][0:num]
+            for j in range(1, npt):
+                i += 1
+                fake_img = torch.cat((fake_img, fake_imgs[i][0:num]), dim=0)
 
         vutils.save_image(
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
