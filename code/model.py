@@ -167,11 +167,10 @@ class NEXT_STAGE_G(nn.Module):
 
     def forward(self, h_code, code):
         s_size = h_code.size(2)
-        print(s_size)
         code = code.view(-1, self.ef_dim, 1, 1)
-        print(code.data)
         code = code.repeat(1, 1, s_size, s_size)
         print(code.size())
+        print(h_code.size())
         h_c_code = torch.cat((code, h_code), 1)
         out_code = self.jointConv(h_c_code)
         out_code = self.residual(out_code)
