@@ -281,8 +281,8 @@ class G_NET(nn.Module):
         num_gpus = len(gpus)
         batch_size = cfg.TRAIN.BATCH_SIZE * num_gpus
 
-        C_masked = torch.zeros([3, 126, 126])
-        C_m = torch.zeros([1, 126, 126])
+        C_masked = torch.zeros([batch_size, 3, 126, 126]).cuda()
+        C_m = torch.zeros([batch_size, 1, 126, 126]).cuda()
 
         for i in range(cfg.NUM_PARTS):
             pti_code = torch.zeros([batch_size, cfg.NUM_PARTS])
