@@ -148,7 +148,7 @@ def save_model(netG, avg_param_G, netsD, epoch, model_dir):
     print('Save G/Ds models.')
 
 
-def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
+def save_img_results(imgs_tcpu, fake_imgs, pt_fake_imgs, num_imgs,
                      count, image_dir, summary_writer):
     num = cfg.TRAIN.VIS_COUNT
     npt = cfg.NUM_PARTS
@@ -163,21 +163,28 @@ def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
     # real_img_set = real_img_set.astype(np.uint8)
 
     for i in range(len(fake_imgs)):
-        if i < 8:
-            fake_img = fake_imgs[i][0:num]
-
-        else:
-            fake_img = fake_imgs[i][0:num]
-            print(fake_img.size())
-            for j in range(1, npt):
-                i += 1
-                print(fake_imgs[i][0:num].size())
-                fake_img = torch.cat((fake_img, fake_imgs[i][0:num]), dim=0)
-            print("out")
+        fake_img = fake_imgs[i][0:num]
 
         vutils.save_image(
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
             (image_dir, count, i), normalize=True)
+
+    for i in range(6):
+        fake_img = pt_fake_imgs[i*npt][0:num]
+
+        print(fake_img.size())
+
+        for j in range(1, npt):
+
+            print(pt_fake_imgs[i*npt+j][0:num].size())
+
+            fake_img = torch.cat((fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
+
+        print("out")
+
+        vutils.save_image(
+            fake_img.data, '%s/count_%09d_fake_samples%d.png' %
+            (image_dir, count, 8+i), normalize=True)
 
         # fake_img_set = vutils.make_grid(fake_img.data).cpu().numpy()
 
@@ -474,8 +481,8 @@ class FineGAN_trainer(object):
                     # print(self.pt_mk[0].size())
 
                     save_img_results(self.imgs_tcpu,
-                                    (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk +
-                                    self.pt_mk + self.pt_fg + self.pt_masked + self.c_mk + self.c_fg + self.c_masked),
+                                    (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk),
+                                    (self.pt_mk + self.pt_fg + self.pt_masked + self.c_mk + self.c_fg + self.c_masked),
                                     self.num_Ds, count, self.image_dir, self.summary_writer)
                     #
                     load_params(self.netG, backup_para)
