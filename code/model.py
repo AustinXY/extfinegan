@@ -157,12 +157,25 @@ class NEXT_STAGE_G(nn.Module):
 
     def forward(self, h_code, code):
         s_size = h_code.size(2)
+        
+        print(code.size())
+        print(h_code.size())
+        
         code = code.view(-1, self.ef_dim, 1, 1)
         code = code.repeat(1, 1, s_size, s_size)
+        
+        print(code.size())
+        
         h_c_code = torch.cat((code, h_code), 1)
+        
+        print(h_c_code.size())
+        
         out_code = self.jointConv(h_c_code)
         out_code = self.residual(out_code)
         out_code = self.samesample(out_code)
+        
+        print(out_code.size())
+        
         return out_code
 
 
