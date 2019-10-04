@@ -364,11 +364,11 @@ class FineGAN_trainer(object):
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total += errG_info
             elif i == 3: # Mutual information loss for the part stage (3)
-                for i in range(cfg.NUM_PARTS):
+                for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
-                    pti_code[:, i] = 1
+                    pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.pt_masked[i])[0]
+                    pred_pti = self.netsD[3](self.pt_masked[pt])[0]
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total += errG_info
 
