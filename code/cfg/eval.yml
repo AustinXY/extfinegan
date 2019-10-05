@@ -1,6 +1,6 @@
 DATASET_NAME: 'birds'
 SAVE_DIR: '../eval_out/'
-GPU_ID: '3'
+GPU_ID: '0'
 WORKERS: 1  # 4
 
 SUPER_CATEGORIES: 20     # For CUB
