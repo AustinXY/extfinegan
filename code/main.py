@@ -69,7 +69,7 @@ if __name__ == "__main__":
     else:
         now = datetime.datetime.now(dateutil.tz.tzlocal())
         timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
-        output_dir = '../output/%s_%s' % \
+        output_dir = '../output/v2_%s_%s' % \
             (cfg.DATASET_NAME, timestamp)
         pkl_filename = 'cfg.pickle'
 
