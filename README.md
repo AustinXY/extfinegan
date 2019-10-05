@@ -1,3 +1,3 @@
 **Version 1**
 
-![](architecture.png)
+![](v1.png)
