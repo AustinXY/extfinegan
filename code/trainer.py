@@ -120,7 +120,7 @@ def define_optimizers(netG, netsD):
             betas=(0.5, 0.999))
             optimizerG.append(opt)
 
-        elif i == 3:
+        elif i == 3: # Part
             opt = optim.Adam(netsD[3].parameters(),
             lr=cfg.TRAIN.GENERATOR_LR,
             betas=(0.5, 0.999))
