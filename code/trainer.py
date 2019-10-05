@@ -150,9 +150,6 @@ def save_model(netG, avg_param_G, netsD, epoch, model_dir):
 
 def save_img_results(imgs_tcpu, fake_imgs, pt_fake_imgs, num_imgs,
                      count, image_dir, summary_writer):
-
-    print('saving images')
-
     num = cfg.TRAIN.VIS_COUNT
     npt = cfg.NUM_PARTS
 
