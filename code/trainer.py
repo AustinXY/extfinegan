@@ -169,7 +169,7 @@ def save_img_results(imgs_tcpu, fake_imgs, pt_fake_imgs, num_imgs,
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
             (image_dir, count, i), normalize=True)
 
-    for i in range(6):
+    for i in range(3):
         fake_img = pt_fake_imgs[i*npt][0:num]
 
         # print(fake_img.size())
@@ -342,19 +342,24 @@ class FineGAN_trainer(object):
 
         for i in range(self.num_Ds):
 
-            if i < 3:
+            # Real/fake loss bg(0) child(2) and bg classification loss (0)
+            if i == 0 or i == 2:
 
+                # real/fake loss
                 outputs = self.netsD[i](self.fake_imgs[i])
 
-                if i == 0 or i == 2:  # real/fake loss for background (0) and child (2) stage
-                    real_labels = torch.ones_like(outputs[1])
-                    errG = criterion_one(outputs[1], real_labels)
-                if i==0:
+                real_labels = torch.ones_like(outputs[1])
+                errG = criterion_one(outputs[1], real_labels)
+
+                # Background/Foreground classification loss for the fake background image (on patch level)
+                if i == 0:
                     errG = errG * cfg.TRAIN.BG_LOSS_WT
-                    errG_classi = criterion_one(outputs[0], real_labels) # Background/Foreground classification loss for the fake background image (on patch level)
+                    errG_classi = criterion_one(outputs[0], real_labels)
                     errG = errG + errG_classi
+
                 errG_total = errG_total + errG
 
+            # Mutual Information loss parent (1) child (2) part (3)
             if i == 1: # Mutual information loss for the parent stage (1)
                 pred_p = self.netsD[1](self.fg_mk[0])[0]
                 errG_info = criterion_class(pred_p, torch.nonzero(p_code.long())[:,1])
@@ -369,7 +374,7 @@ class FineGAN_trainer(object):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.pt_masked[pt])[0]
+                    pred_pti = self.netsD[3](self.c_mask[pt])[0]
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total += errG_info
 
@@ -389,7 +394,7 @@ class FineGAN_trainer(object):
 
                 if i == 3:
                     for j in range(cfg.NUM_PARTS):
-                        summary_D_class = summary.scalar('Part%d_Information_loss_%d' % (j, i), pti_loss[j])
+                        summary_D_class = summary.scalar('Part%d_Information_loss' % j, pti_loss[j])
                         self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
@@ -448,7 +453,7 @@ class FineGAN_trainer(object):
                 # Feedforward through Generator. Obtain stagewise fake images
                 noise.data.normal_(0, 1)
 
-                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked = \
                     self.netG(noise, self.c_code)
 
                 # Obtain the parent code given the child code
@@ -474,25 +479,14 @@ class FineGAN_trainer(object):
                     # Save images
                     load_params(self.netG, avg_param_G)
 
-                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.pt_mk, self.pt_fg, self.pt_masked, self.c_mk, self.c_fg, self.c_masked = \
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked = \
                         self.netG(fixed_noise, self.c_code)
-
-                    # print(len(self.fake_imgs))
-                    # print(len(self.fg_imgs))
-                    # print(len(self.mk_imgs))
-                    # print(len(self.fg_mk))
-                    # print(len(self.pt_mk))
-                    # print(self.fake_imgs[0].size())
-                    # print(self.fg_imgs[0].size())
-                    # print(self.mk_imgs[0].size())
-                    # print(self.fg_mk[0].size())
-                    # print(self.pt_mk[0].size())
 
                     save_img_results(self.imgs_tcpu,
                                     (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk),
-                                    (self.pt_mk + self.pt_fg + self.pt_masked + self.c_mk + self.c_fg + self.c_masked),
+                                    (self.c_mk + self.c_fg + self.c_masked),
                                     self.num_Ds, count, self.image_dir, self.summary_writer)
-                    #
+
                     load_params(self.netG, backup_para)
 
             end_t = time.time()
@@ -672,7 +666,7 @@ class FineGAN_evaluator(object):
                 c_code[j][child_class] = 1
 
             # fake_imgs, fg_imgs, mk_imgs, fgmk_imgs = netG(noise, c_code, p_code, bg_code) # Forward pass through the generator
-            fake_imgs, fg_imgs, mk_imgs, fg_mk, pt_mk, pt_fg, pt_masked, c_mk, c_fg, c_masked = \
+            fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
                 netG(noise, c_code, p_code, bg_code)
             # print(fake_imgs.shape)
 
@@ -687,10 +681,6 @@ class FineGAN_evaluator(object):
             self.save_image(fg_mk[1][0], self.save_dir, 'child_foreground_masked')
 
             for i in range(cfg.NUM_PARTS):
-                self.save_image(pt_mk[i][0], self.save_dir, 'part' + str(i) + '_mask')
-                self.save_image(pt_fg[i][0], self.save_dir, 'part' + str(i) + '_foreground')
-                self.save_image(pt_masked[i][0], self.save_dir, 'part' + str(i) + '_foreground_masked')
-
                 self.save_image(c_mk[i][0], self.save_dir, 'part' + str(i) + '_mask')
                 self.save_image(c_fg[i][0], self.save_dir, 'part' + str(i) + '_foreground')
                 self.save_image(c_masked[i][0], self.save_dir, 'part' + str(i) + '_foreground_masked')
