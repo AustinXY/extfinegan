@@ -356,10 +356,27 @@ def downBlock(in_planes, out_planes):
     return block
 
 
-
-def encode_parent_and_child_img(ndf): # Defines the encoder network used for parent and child image
+# Defines the encoder network used for parent and child image
+def encode_parent_and_child_img(ndf):
     encode_img = nn.Sequential(
         nn.Conv2d(3, ndf, 4, 2, 1, bias=False),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 2),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 4),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 8),
+        nn.LeakyReLU(0.2, inplace=True)
+    )
+    return encode_img
+
+# Defines the encoder network used for part mask
+def encode_part_mask(ndf):
+    encode_img = nn.Sequential(
+        nn.Conv2d(1, ndf, 4, 2, 1, bias=False),
         nn.LeakyReLU(0.2, inplace=True),
         nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
         nn.BatchNorm2d(ndf * 2),
@@ -423,6 +440,20 @@ class D_NET(nn.Module):
             self.uncond_logits2 = nn.Sequential(
             nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
             nn.Sigmoid())
+
+        elif self.stg_no == 3:
+            self.img_code_s16 = encode_part_mask(ndf)
+            self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
+            self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
+
+            self.logits = nn.Sequential(
+                nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
+
+            self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
+            self.uncond_logits = nn.Sequential(
+            nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
+            nn.Sigmoid())
+
 
         else:
             self.img_code_s16 = encode_parent_and_child_img(ndf)
