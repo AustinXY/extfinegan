@@ -683,8 +683,8 @@ class FineGAN_evaluator(object):
             # self.save_image(fg_imgs[1][0], self.save_dir, 'child_foreground')
             self.save_image(mk_imgs[0][0], self.save_dir, 'parent_mask')
             self.save_image(mk_imgs[1][0], self.save_dir, 'child_mask')
-            self.save_image(fgmk_imgs[0][0], self.save_dir, 'parent_foreground_masked')
-            self.save_image(fgmk_imgs[1][0], self.save_dir, 'child_foreground_masked')
+            self.save_image(fg_mk[0][0], self.save_dir, 'parent_foreground_masked')
+            self.save_image(fg_mk[1][0], self.save_dir, 'child_foreground_masked')
 
             for i in range(cfg.NUM_PARTS):
                 self.save_image(pt_mk[i][0], self.save_dir, 'part' + str(i) + '_mask')
