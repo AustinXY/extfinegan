@@ -395,9 +395,10 @@ class FineGAN_trainer(object):
                     self.summary_writer.add_summary(summary_D, count)
 
                 if i == 3:
+                    print(count)
                     for pt in range(cfg.NUM_PARTS):
 
-                        print(pt, pred_ptis[pt].data)
+                        print(pt, pred_ptis[pt].data[0])
 
                         summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_loss[pt])
                         self.summary_writer.add_summary(summary_D_class, count)
