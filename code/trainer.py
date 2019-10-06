@@ -397,6 +397,7 @@ class FineGAN_trainer(object):
             elif i == 3: # Mutual information loss for the part stage (3)
                 pt_li = torch.randint(4, (10,))
                 pt = pt_li[0]
+                print(pt)
                 Ci_m = self.c_mk[pt[0]][0]
                 for ix, pt in enumerate(pt_li[1:]):
                     temp_Ci_m = self.c_mk[pt[0]][ix]
