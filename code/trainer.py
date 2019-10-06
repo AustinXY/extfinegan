@@ -401,6 +401,7 @@ class FineGAN_trainer(object):
                     temp_Ci_m = self.c_mk[pt.int().item()][ix:]
                     Ci_m = torch.cat((Ci_m, temp_Ci_m), dim=0)
 
+                print(Ci_m.size())
                 pred_pti = self.netsD[3](Ci_m)[0]
                 pt_li = pt_li.cuda()
                 errG_info = criterion_class(pred_pti, pt_li.long())
