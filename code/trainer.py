@@ -380,7 +380,7 @@ class FineGAN_trainer(object):
                     errG_total = errG_total + errG_info
 
                     pti_loss.append(errG_info)
-                    pred_ptis.append(pred_pti)
+                    pred_ptis.append(pred_pti[0])
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
