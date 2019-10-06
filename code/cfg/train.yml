@@ -29,5 +29,5 @@ TRAIN:
 GAN:
     DF_DIM: 64
     GF_DIM: 64
-    Z_DIM: 90
+    Z_DIM: 80
     R_NUM: 2
