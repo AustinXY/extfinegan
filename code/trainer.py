@@ -330,6 +330,7 @@ class FineGAN_trainer(object):
             return errD
 
     def train_Gnet(self, count):
+        f = False
         self.netG.zero_grad()
         for myit in range(len(self.netsD)):
              self.netsD[myit].zero_grad()
@@ -380,11 +381,17 @@ class FineGAN_trainer(object):
                     errG_total = errG_total + errG_info
 
                     pti_loss.append(errG_info)
-                    pred_ptis.append(pred_pti[0])
+                    pred_ptis.append(pred_pti)
 
                     if errG_info == 0:
-                        print('\n0 part loss:')
-                        print(pt, pred_pti.data)
+                        f = True
+
+            if f:
+                f = False
+                print('\n0 part loss:')
+                for pt in range(cfg.NUM_PARTS):
+                    print(str(pt) + ':')
+                    print(pred_ptis[pt].data)
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
