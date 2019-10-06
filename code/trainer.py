@@ -384,7 +384,7 @@ class FineGAN_trainer(object):
 
                     if errG_info == 0:
                         print('\n0 part loss:')
-                        print(pt, pti_code.data)
+                        print(pt, pred_pti.data)
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
