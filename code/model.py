@@ -441,18 +441,18 @@ class D_NET(nn.Module):
             nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
             nn.Sigmoid())
 
-        elif self.stg_no == 3:
-            self.img_code_s16 = encode_part_mask(ndf)
-            self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
-            self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
+        # elif self.stg_no == 3:
+        #     self.img_code_s16 = encode_part_mask(ndf)
+        #     self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
+        #     self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
 
-            self.logits = nn.Sequential(
-                nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
+        #     self.logits = nn.Sequential(
+        #         nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
 
-            self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
-            self.uncond_logits = nn.Sequential(
-            nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
-            nn.Sigmoid())
+        #     self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
+        #     self.uncond_logits = nn.Sequential(
+        #     nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
+        #     nn.Sigmoid())
 
 
         else:
