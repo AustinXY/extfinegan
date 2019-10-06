@@ -396,7 +396,7 @@ class FineGAN_trainer(object):
             # random generate pt
             elif i == 3: # Mutual information loss for the part stage (3)
                 pt_li = torch.randint(4, (10,))
-                pt = pt_li[0]
+                pt = pt_li[0][0]
                 print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
                 print(pt)
                 Ci_m = self.c_mk[pt[0]][0]
