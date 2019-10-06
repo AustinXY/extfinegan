@@ -330,7 +330,7 @@ class FineGAN_trainer(object):
             return errD
 
     def train_Gnet(self, count):
-        f = False
+        # f = False
         self.netG.zero_grad()
         for myit in range(len(self.netsD)):
              self.netsD[myit].zero_grad()
@@ -371,27 +371,26 @@ class FineGAN_trainer(object):
             elif i == 3: # Mutual information loss for the part stage (3)
                 pti_loss = []
                 pred_ptis = []
-                magnifier = 1
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
                     pred_pti = self.netsD[3](self.c_mk[pt])[0]
-                    errG_info = magnifier * criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
+                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total = errG_total + errG_info
 
                     pti_loss.append(errG_info)
-                    pred_ptis.append(pred_pti)
+                    # pred_ptis.append(pred_pti)
 
-                    if errG_info == 0:
-                        f = True
+                    # if errG_info == 0:
+                    #     f = True
 
-            if f:
-                f = False
-                print('\n0 part loss:')
-                for pt in range(cfg.NUM_PARTS):
-                    print(str(pt) + ':')
-                    print(pred_ptis[pt].data)
+            # if f:
+            #     f = False
+            #     print('\n0 part loss:')
+            #     for pt in range(cfg.NUM_PARTS):
+            #         print(str(pt) + ':')
+            #         print(pred_ptis[pt].data)
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
