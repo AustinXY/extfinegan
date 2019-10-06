@@ -385,7 +385,7 @@ class FineGAN_trainer(object):
             elif i == 3: # Mutual information loss for the part stage (3)
                 # pti_loss = []
                 # pred_ptis = []
-                pt = random.sample(range(cfg.NUM_PARTS), 1)
+                pt = random.sample(range(cfg.NUM_PARTS), 1)[0]
                 pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                 pti_code[:, pt] = 1
 
