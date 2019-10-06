@@ -28,7 +28,6 @@ from model import G_NET, D_NET
 # ################## Shared functions ###################
 
 def child_to_parent(child_c_code, classes_child, classes_parent):
-
     ratio = classes_child / classes_parent
     arg_parent = torch.argmax(child_c_code, dim=1) / ratio
     parent_c_code = torch.zeros([child_c_code.size(0), classes_parent]).cuda()
@@ -370,6 +369,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total+ errG_info
             elif i == 3: # Mutual information loss for the part stage (3)
                 pti_loss = []
+                pred_ptis = []
                 magnifier = 20
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
@@ -380,6 +380,7 @@ class FineGAN_trainer(object):
                     errG_total = errG_total + errG_info
 
                     pti_loss.append(errG_info)
+                    pred_ptis.append(pred_pti)
 
             # if i > 0:
             #     errG_total = errG_total + errG_info
@@ -395,6 +396,9 @@ class FineGAN_trainer(object):
 
                 if i == 3:
                     for j in range(cfg.NUM_PARTS):
+
+                        print(pt, pred_ptis[pt].data)
+
                         summary_D_class = summary.scalar('Part%d_Information_loss' % j, pti_loss[j])
                         self.summary_writer.add_summary(summary_D_class, count)
 
@@ -610,7 +614,6 @@ class FineGAN_trainer(object):
 class FineGAN_evaluator(object):
 
     def __init__(self):
-
         self.save_dir = os.path.join(cfg.SAVE_DIR, 'images')
         mkdir_p(self.save_dir)
         s_gpus = cfg.GPU_ID.split(',')
