@@ -363,11 +363,11 @@ class FineGAN_trainer(object):
             if i == 1: # Mutual information loss for the parent stage (1)
                 pred_p = self.netsD[1](self.fg_mk[0])[0]
                 errG_info = criterion_class(pred_p, torch.nonzero(p_code.long())[:,1])
-                errG_total += errG_info
+                errG_total = errG_total + errG_info
             elif i == 2: # Mutual information loss for the child stage (2)
                 pred_c = self.netsD[2](self.fg_mk[1])[0]
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
-                errG_total += errG_info
+                errG_total = errG_total + errG_info
             elif i == 3: # Mutual information loss for the part stage (3)
                 pti_loss = []
                 for pt in range(cfg.NUM_PARTS):
@@ -376,17 +376,17 @@ class FineGAN_trainer(object):
 
                     pred_pti = self.netsD[3](self.c_mk[pt])[0]
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total += errG_info
+                    errG_total = errG_total + errG_info
 
                     pti_loss.append(errG_info)
 
             # mask overlapping loss
             overlap_mk = self.c_mk[0]
             for pt in range(1, cfg.NUM_PARTS):
-                overlap_mk *= self.c_mk[pt]
+                overlap_mk = overlap_mk * self.c_mk[pt]
 
             errG_overlap = torch.sum(overlap_mk)
-            errG_total += errG_overlap
+            errG_total = errG_total + errG_overlap
 
 
             if flag == 0:
@@ -470,7 +470,7 @@ class FineGAN_trainer(object):
                 for i in range(self.num_Ds):
                     if i == 0 or i == 2: # only at backgroud and child stage
                         errD = self.train_Dnet(i, count)
-                        errD_total += errD
+                        errD_total = errD_total + errD
 
                 # Update the Generator networks
                 errG_total = self.train_Gnet(count)
