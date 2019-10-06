@@ -345,9 +345,9 @@ class FineGAN_trainer(object):
             # Real/fake loss bg(0) child(2) and bg classification loss (0)
             if i == 0 or i == 2:
 
-                # real/fake loss
                 outputs = self.netsD[i](self.fake_imgs[i])
 
+                # real/fake loss
                 real_labels = torch.ones_like(outputs[1])
                 errG = criterion_one(outputs[1], real_labels)
 
@@ -380,8 +380,14 @@ class FineGAN_trainer(object):
 
                     pti_loss.append(errG_info)
 
-            # if i > 0:
-            #     errG_total = errG_total + errG_info
+            # mask overlapping loss
+            overlap_mk = self.c_mk[0]
+            for pt in range(1, cfg.NUM_PARTS):
+                overlap_mk *= self.c_mk[pt]
+
+            errG_overlap = torch.sum(overlap_mk)
+            errG_total += errG_overlap
+
 
             if flag == 0:
                 if i == 1 or i == 2:
