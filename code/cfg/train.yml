@@ -7,7 +7,7 @@ WORKERS: 1
 
 NUM_PARTS: 10
 SUPER_CATEGORIES: 18   # For CUB
-FINE_GRAINED_CATEGORIES: 160  # For CUB
+FINE_GRAINED_CATEGORIES: 180  # For CUB
 TIED_CODES: True   # Do NOT change this to False during training.
 
 TREE:
