@@ -6,8 +6,8 @@ GPU_ID: '0'
 WORKERS: 1
 
 NUM_PARTS: 10
-SUPER_CATEGORIES: 17   # For CUB
-FINE_GRAINED_CATEGORIES: 170  # For CUB
+SUPER_CATEGORIES: 18   # For CUB
+FINE_GRAINED_CATEGORIES: 180  # For CUB
 TIED_CODES: True   # Do NOT change this to False during training.
 
 TREE:
@@ -29,5 +29,5 @@ TRAIN:
 GAN:
     DF_DIM: 64
     GF_DIM: 64
-    Z_DIM: 100
+    Z_DIM: 90
     R_NUM: 2
