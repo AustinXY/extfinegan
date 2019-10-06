@@ -181,7 +181,7 @@ class Dataset(data.Dataset):
         fimgs, cimgs, warped_bbox = get_imgs(img_name, self.imsize,
                         bbox, self.transform, normalize=self.norm)
 
-        rand_class= random.sample(range(cfg.FINE_GRAINED_CATEGORIES),1); # Randomly generating child code during training
+        rand_class= random.sample(range(cfg.FINE_GRAINED_CATEGORIES),1) # Randomly generating child code during training
         c_code = torch.zeros([cfg.FINE_GRAINED_CATEGORIES,])
         c_code[rand_class] = 1
 

@@ -135,15 +135,15 @@ def define_optimizers(netG, netsD):
 
 
 def save_model(netG, avg_param_G, netsD, epoch, model_dir):
-    # load_params(netG, avg_param_G)
-    # torch.save(
-    #     netG.state_dict(),
-    #     '%s/netG_%d.pth' % (model_dir, epoch))
-    # for i in range(len(netsD)):
-    #     netD = netsD[i]
-    #     torch.save(
-    #         netD.state_dict(),
-    #         '%s/netD%d.pth' % (model_dir, i))
+    load_params(netG, avg_param_G)
+    torch.save(
+        netG.state_dict(),
+        '%s/netG_%d.pth' % (model_dir, epoch))
+    for i in range(len(netsD)):
+        netD = netsD[i]
+        torch.save(
+            netD.state_dict(),
+            '%s/netD%d.pth' % (model_dir, i))
     print('Save G/Ds models.')
 
 
@@ -368,18 +368,32 @@ class FineGAN_trainer(object):
                 pred_c = self.netsD[2](self.fg_mk[1])[0]
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total = errG_total+ errG_info
+            # elif i == 3: # Mutual information loss for the part stage (3)
+            #     pti_loss = []
+            #     pred_ptis = []
+            #     for pt in range(cfg.NUM_PARTS):
+            #         pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
+            #         pti_code[:, pt] = 1
+
+            #         pred_pti = self.netsD[3](self.c_mk[pt])[0]
+            #         errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
+            #         errG_total = errG_total + errG_info
+
+            #         pti_loss.append(errG_info)
+
+            # random generate pt
             elif i == 3: # Mutual information loss for the part stage (3)
-                pti_loss = []
-                pred_ptis = []
-                for pt in range(cfg.NUM_PARTS):
-                    pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
-                    pti_code[:, pt] = 1
+                # pti_loss = []
+                # pred_ptis = []
+                pt = random.sample(range(cfg.FINE_GRAINED_CATEGORIES), 1)
+                pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
+                pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.c_mk[pt])[0]
-                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total = errG_total + errG_info
+                pred_pti = self.netsD[3](self.c_mk[pt])[0]
+                errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
+                errG_total = errG_total + errG_info
 
-                    pti_loss.append(errG_info)
+                # pti_loss.append(errG_info)
                     # pred_ptis.append(pred_pti)
 
                     # if errG_info == 0:
