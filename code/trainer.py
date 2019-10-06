@@ -179,8 +179,6 @@ def save_img_results(imgs_tcpu, fake_imgs, pt_fake_imgs, num_imgs,
 
             fake_img = torch.cat((fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
 
-        # print("out")
-
         vutils.save_image(
             fake_img.data, '%s/count_%09d_fake_samples%d.png' %
             (image_dir, count, 8+i), normalize=True)
@@ -529,8 +527,6 @@ class FineGAN_trainer(object):
                                     (self.fake_imgs + self.fg_imgs + self.mk_imgs + self.fg_mk),
                                     (self.c_mk + self.c_fg + self.c_masked),
                                     self.num_Ds, count, self.image_dir, self.summary_writer)
-
-                    print('img saved')
 
                     load_params(self.netG, backup_para)
 
