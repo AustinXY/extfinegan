@@ -390,6 +390,9 @@ class FineGAN_trainer(object):
 
 
             if flag == 0:
+                summary_D_class = summary.scalar('Overlapping_loss', errG_overlap.data[0])
+                self.summary_writer.add_summary(summary_D_class, count)
+
                 if i == 1 or i == 2:
                     summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
@@ -400,7 +403,7 @@ class FineGAN_trainer(object):
 
                 if i == 3:
                     for j in range(cfg.NUM_PARTS):
-                        summary_D_class = summary.scalar('Part%d_Information_loss' % j, pti_loss[j])
+                        summary_D_class = summary.scalar('Part%d_Information_loss' % j, pti_loss[j].data[0])
                         self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
