@@ -396,9 +396,9 @@ class FineGAN_trainer(object):
             # random generate pt
             elif i == 3: # Mutual information loss for the part stage (3)
                 pt_li = torch.randint(4, (10,))
-                Ci_m = self.c_mk[pt_li[0].int().item()][0]
+                Ci_m = self.c_mk[pt_li[0].int().item()][0:]
                 for ix, pt in enumerate(pt_li[1:]):
-                    temp_Ci_m = self.c_mk[pt.int().item()][ix]
+                    temp_Ci_m = self.c_mk[pt.int().item()][ix:]
                     Ci_m = torch.cat((Ci_m, temp_Ci_m), dim=0)
 
                 pred_pti = self.netsD[3](Ci_m)[0]
