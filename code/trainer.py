@@ -503,6 +503,8 @@ class FineGAN_trainer(object):
                                     (self.c_mk + self.c_fg + self.c_masked),
                                     self.num_Ds, count, self.image_dir, self.summary_writer)
 
+                    print('img saved')
+
                     load_params(self.netG, backup_para)
 
             end_t = time.time()
