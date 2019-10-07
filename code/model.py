@@ -318,8 +318,8 @@ class G_NET(nn.Module):
             c_mk.append(Ci_m)
             c_masked.append(Ci_masked)
 
-            C_m += Ci_m
-            C_masked += Ci_masked
+            C_m = C_m + Ci_m
+            C_masked = C_masked + Ci_masked
 
         # C_m = torch.clamp(C_m, 0, 1)
         mk_imgs.append(C_m)
