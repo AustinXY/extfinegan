@@ -135,15 +135,15 @@ def define_optimizers(netG, netsD):
 
 
 def save_model(netG, avg_param_G, netsD, epoch, model_dir):
-    load_params(netG, avg_param_G)
-    torch.save(
-        netG.state_dict(),
-        '%s/netG_%d.pth' % (model_dir, epoch))
-    for i in range(len(netsD)):
-        netD = netsD[i]
-        torch.save(
-            netD.state_dict(),
-            '%s/netD%d.pth' % (model_dir, i))
+    # load_params(netG, avg_param_G)
+    # torch.save(
+    #     netG.state_dict(),
+    #     '%s/netG_%d.pth' % (model_dir, epoch))
+    # for i in range(len(netsD)):
+    #     netD = netsD[i]
+    #     torch.save(
+    #         netD.state_dict(),
+    #         '%s/netD%d.pth' % (model_dir, i))
     print('Save G/Ds models.')
 
 
