@@ -263,6 +263,8 @@ class G_NET(nn.Module):
         c_fg = []  # will contain [C1_f, C2_f, ...]
         c_masked = []  # Will contain [C1_masked, C2_masked, ...]
 
+        bin_c_mk = [] # binary masks
+
         if cfg.TIED_CODES:
             p_code = child_to_parent(c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES) # Obtaining the parent code from child code
             bg_code = c_code
@@ -310,6 +312,9 @@ class G_NET(nn.Module):
         c_mk.append(C1_m)
         c_masked.append(C1_masked)
 
+        bin_C1_m = torch.where(C1_m > 0, torch.ones_like(C1_m), torch.zeros_like(C1_m)).cuda()
+        bin_c_mk.append(bin_C1_m)
+
         # child 2
         pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
         pti_code[:, 1] = 1
@@ -324,6 +329,9 @@ class G_NET(nn.Module):
         c_fg.append(C2_f)
         c_mk.append(C2_m)
         c_masked.append(C2_masked)
+
+        bin_C2_m = torch.where(C2_m > 0, torch.ones_like(C2_m), torch.zeros_like(C2_m)).cuda()
+        bin_c_mk.append(bin_C2_m)
 
         # child 3
         pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
@@ -340,6 +348,8 @@ class G_NET(nn.Module):
         c_mk.append(C3_m)
         c_masked.append(C3_masked)
 
+        bin_C3_m = torch.where(C3_m > 0, torch.ones_like(C3_m), torch.zeros_like(C3_m)).cuda()
+        bin_c_mk.append(bin_C3_m)
 
         C_m = C1_m + C2_m + C3_m
         C_masked = C1_masked + C2_masked + C3_masked
@@ -371,7 +381,7 @@ class G_NET(nn.Module):
 
         fake_imgs.append(C)
 
-        return fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked
+        return fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked, bin_c_mk
 
 
 # ############## D networks ################################################
