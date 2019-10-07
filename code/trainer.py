@@ -373,7 +373,9 @@ class FineGAN_trainer(object):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.bin_c_mk[pt])[0]
+                    temp_bin_mk = torch.where(self.c_mk[pt] > 0, torch.ones_like(self.c_mk[pt]), torch.zeros_like(self.c_mk[pt])).cuda()
+
+                    pred_pti = self.netsD[3](temp_bin_mk)[0]
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total = errG_total + errG_info
 
@@ -494,7 +496,7 @@ class FineGAN_trainer(object):
                 # Feedforward through Generator. Obtain stagewise fake images
                 noise.data.normal_(0, 1)
 
-                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked, self.bin_c_mk = \
+                self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked = \
                     self.netG(noise, self.c_code)
 
                 # Obtain the parent code given the child code
@@ -520,7 +522,7 @@ class FineGAN_trainer(object):
                     # Save images
                     load_params(self.netG, avg_param_G)
 
-                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked, self.bin_c_mk = \
+                    self.fake_imgs, self.fg_imgs, self.mk_imgs, self.fg_mk, self.c_mk, self.c_fg, self.c_masked = \
                         self.netG(fixed_noise, self.c_code)
 
                     save_img_results(self.imgs_tcpu,
