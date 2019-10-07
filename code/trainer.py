@@ -373,7 +373,7 @@ class FineGAN_trainer(object):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.c_fg[pt])[0]
+                    pred_pti = self.netsD[3](self.c_mk[pt])[0]
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total = errG_total + errG_info
 
