@@ -236,12 +236,12 @@ class G_NET(nn.Module):
 
         # Child stage networks 2
         self.h_net4 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=0)
-        # self.img_net4 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
+        self.img_net4 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
         self.img_net4_mask = GET_MASK_G(self.gf_dim // 4) # Child mask generation network
 
         # Child stage networks 3
         self.h_net5 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=0)
-        # self.img_net5 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
+        self.img_net5 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
         self.img_net5_mask = GET_MASK_G(self.gf_dim // 4) # Child mask generation network
 
         # # Part stage networks
@@ -317,7 +317,7 @@ class G_NET(nn.Module):
         in_code2 = torch.cat((pti_code, c_code), 1)  # concat pti and c
 
         h_code4 = self.h_net4(h_code2, in_code2)
-        C2_f = self.img_net3(h_code4)  # Child part i foreground
+        C2_f = self.img_net4(h_code4)  # Child part i foreground
         C2_m = self.img_net4_mask(h_code4)  # Child part i mask
         C2_masked = torch.mul(C2_f, C2_m)  # Child part i foreground masked
 
@@ -332,7 +332,7 @@ class G_NET(nn.Module):
         in_code3 = torch.cat((pti_code, c_code), 1)  # concat pti and c
 
         h_code5 = self.h_net5(h_code2, in_code2)
-        C3_f = self.img_net3(h_code5)  # Child part i foreground
+        C3_f = self.img_net5(h_code5)  # Child part i foreground
         C3_m = self.img_net5_mask(h_code5)  # Child part i mask
         C3_masked = torch.mul(C3_f, C3_m)  # Child part i foreground masked
 
