@@ -229,10 +229,15 @@ class G_NET(nn.Module):
         self.img_net2 = GET_IMAGE_G(self.gf_dim // 2)  # Parent foreground generation network
         self.img_net2_mask= GET_MASK_G(self.gf_dim // 2) # Parent mask generation network
 
-        # Child stage networks
+        # Child stage networks 1
         self.h_net3 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=0)
         self.img_net3 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
         self.img_net3_mask = GET_MASK_G(self.gf_dim // 4) # Child mask generation network
+
+        # Child stage networks 2
+        self.h_net4 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=0)
+        self.img_net4 = GET_IMAGE_G(self.gf_dim // 4) # Child foreground generation network
+        self.img_net4_mask = GET_MASK_G(self.gf_dim // 4) # Child mask generation network
 
         # # Part stage networks
         # self.h_net4 = NEXT_STAGE_G(self.gf_dim // 2, use_hrc=2)
@@ -285,19 +290,38 @@ class G_NET(nn.Module):
         num_gpus = len(gpus)
         batch_size = cfg.TRAIN.BATCH_SIZE * num_gpus
 
-        C_masked = torch.zeros([batch_size, 3, 128, 128]).cuda()
-        C_m = torch.zeros([batch_size, 1, 128, 128]).cuda()
+        # child 1
+        pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
+        pti_code[:, 0] = 1
 
-        for i in range(cfg.NUM_PARTS):
-            pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
-            pti_code[:, i] = 1
+        in_code1 = torch.cat((pti_code, c_code), 1) # concat pti and c
 
-            in_code = torch.cat((pti_code, c_code), 1) # concat pti and c
+        h_code3 = self.h_net3(h_code2, in_code1)
+        C1_f = self.img_net3(h_code3)  # Child part i foreground
+        C1_m = self.img_net3_mask(h_code3)  # Child part i mask
+        C1_masked = torch.mul(C1_f, C1_m)  # Child part i foreground masked
 
-            h_code3 = self.h_net3(h_code2, in_code)
-            Ci_f = self.img_net3(h_code3)  # Child part i foreground
-            Ci_m = self.img_net3_mask(h_code3)  # Child part i mask
-            Ci_masked = torch.mul(Ci_f, Ci_m)  # Child part i foreground masked
+        c_fg.append(C1_f)
+        c_mk.append(C1_m)
+        c_masked.append(C1_masked)
+
+        # child 2
+        pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
+        pti_code[:, 1] = 1
+
+        in_code2 = torch.cat((pti_code, c_code), 1)  # concat pti and c
+
+        h_code4 = self.h_net4(h_code2, in_code2)
+        C2_f = self.img_net4(h_code4)  # Child part i foreground
+        C2_m = self.img_net4_mask(h_code4)  # Child part i mask
+        C2_masked = torch.mul(C2_f, C2_m)  # Child part i foreground masked
+
+        c_fg.append(C2_f)
+        c_mk.append(C2_m)
+        c_masked.append(C2_masked)
+
+        C_m = C1_m + C2_m
+        C_masked = C1_masked + C2_masked
 
             # h_code4 = self.h_net4(h_code2, pti_code)
             # Pti_f = self.img_net4(h_code4) # Part foreground
@@ -313,13 +337,6 @@ class G_NET(nn.Module):
             # Ci_f = self.img_net3(h_code3) # Child part i foreground
             # Ci_m = self.img_net3_mask(h_code3) # Child part i mask
             # Ci_masked = torch.mul(Ci_f, Ci_m) # Child part i foreground masked
-
-            c_fg.append(Ci_f)
-            c_mk.append(Ci_m)
-            c_masked.append(Ci_masked)
-
-            C_m += Ci_m
-            C_masked += Ci_masked
 
         # C_m = torch.clamp(C_m, 0, 1)
         mk_imgs.append(C_m)
