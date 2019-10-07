@@ -5,7 +5,7 @@ SAVE_DIR: '../output/vis'
 GPU_ID: '0'
 WORKERS: 1
 
-NUM_PARTS: 2
+NUM_PARTS: 3
 SUPER_CATEGORIES: 20   # For CUB
 FINE_GRAINED_CATEGORIES: 200  # For CUB
 TIED_CODES: True   # Do NOT change this to False during training.
