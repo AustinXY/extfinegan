@@ -699,7 +699,7 @@ class FineGAN_evaluator(object):
             torch.manual_seed(1)
             bg_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
             p_li = torch.randint(cfg.SUPER_CATEGORIES, (self.batch_size,))
-            torch.manual_seed(19)
+            torch.manual_seed(2)
             c_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
             print(p_li)
             print(c_li)
