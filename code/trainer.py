@@ -700,6 +700,8 @@ class FineGAN_evaluator(object):
             bg_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
             p_li = torch.randint(cfg.SUPER_CATEGORIES, (self.batch_size,))
             c_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
+            print(p_li.item())
+            print(c_li.item())
 
             bg_code = torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])
             p_code = torch.zeros([self.batch_size, cfg.SUPER_CATEGORIES])
