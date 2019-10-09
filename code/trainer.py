@@ -693,17 +693,21 @@ class FineGAN_evaluator(object):
 
             netG.eval()
 
-            background_class = cfg.TEST_BACKGROUND_CLASS
-            parent_class = cfg.TEST_PARENT_CLASS
-            child_class = cfg.TEST_CHILD_CLASS
+            # background_class = cfg.TEST_BACKGROUND_CLASS
+            # parent_class = cfg.TEST_PARENT_CLASS
+            # child_class = cfg.TEST_CHILD_CLASS
+            bg_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
+            p_li = torch.randint(cfg.SUPER_CATEGORIES, (self.batch_size,))
+            c_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
+
             bg_code = torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])
             p_code = torch.zeros([self.batch_size, cfg.SUPER_CATEGORIES])
             c_code = torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])
 
             for j in range(self.batch_size):
-                bg_code[j][background_class] = 1
-                p_code[j][parent_class] = 1
-                c_code[j][child_class] = 1
+                bg_code[j][bg_li[j].int().item()] = 1
+                p_code[j][p_li[j].int().item()] = 1
+                c_code[j][c_li[j].int().item()] = 1
 
             # fake_imgs, fg_imgs, mk_imgs, fgmk_imgs = netG(noise, c_code, p_code, bg_code) # Forward pass through the generator
             fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
@@ -752,7 +756,7 @@ class FineGAN_evaluator(object):
 
 
     def save_img_eval(self, fake_imgs, pt_fake_imgs, image_dir):
-        num = cfg.TRAIN.VIS_COUNT
+        num = 8
         npt = cfg.NUM_PARTS
 
         # for i in range(len(fake_imgs)):
