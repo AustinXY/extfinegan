@@ -696,7 +696,7 @@ class FineGAN_evaluator(object):
             # background_class = cfg.TEST_BACKGROUND_CLASS
             # parent_class = cfg.TEST_PARENT_CLASS
             # child_class = cfg.TEST_CHILD_CLASS
-            torch.manual_seed(3)
+            torch.manual_seed(2)
             bg_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
             p_li = torch.randint(cfg.SUPER_CATEGORIES, (self.batch_size,))
             torch.manual_seed(2)
