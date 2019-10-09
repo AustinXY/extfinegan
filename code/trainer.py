@@ -755,25 +755,26 @@ class FineGAN_evaluator(object):
         num = cfg.TRAIN.VIS_COUNT
         npt = cfg.NUM_PARTS
 
-        for i in range(len(fake_imgs)):
-            fake_img = fake_imgs[i][0:num]
+        # for i in range(len(fake_imgs)):
+        #     fake_img = fake_imgs[i][0:num]
 
-            vutils.save_image(
-                fake_img.data, '%s/fake_samples%d.png' %
-                (image_dir, i), normalize=True)
+        #     vutils.save_image(
+        #         fake_img.data, '%s/fake_samples%d.png' %
+        #         (image_dir, i), normalize=True)
 
-        for i in range(3):
-            fake_img = pt_fake_imgs[i*npt][0:num]
+        # for i in range(3):
+        #     fake_img = pt_fake_imgs[i*npt][0:num]
 
             # print(fake_img.size())
 
-            for j in range(1, npt):
+        i = 0
+        for j in range(1, npt):
 
-                # print(pt_fake_imgs[i*npt+j][0:num].size())
+            # print(pt_fake_imgs[i*npt+j][0:num].size())
 
-                fake_img = torch.cat(
-                    (fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
+            fake_img = torch.cat(
+                (fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
 
-            vutils.save_image(
-                fake_img.data, '%s/fake_samples%d.png' %
-                (image_dir, 8+i), normalize=True)
+        vutils.save_image(
+            fake_img.data, '%s/fake_samples%d.png' %
+            (image_dir, 8+i), normalize=True)
