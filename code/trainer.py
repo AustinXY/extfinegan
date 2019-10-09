@@ -768,6 +768,7 @@ class FineGAN_evaluator(object):
             # print(fake_img.size())
 
         i = 0
+        fake_img = pt_fake_imgs[i*npt][0:num]
         for j in range(1, npt):
 
             # print(pt_fake_imgs[i*npt+j][0:num].size())
