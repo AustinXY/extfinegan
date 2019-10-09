@@ -708,22 +708,24 @@ class FineGAN_evaluator(object):
             # fake_imgs, fg_imgs, mk_imgs, fgmk_imgs = netG(noise, c_code, p_code, bg_code) # Forward pass through the generator
             fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
                 netG(noise, c_code, p_code, bg_code)
-            # print(fake_imgs.shape)
 
-            self.save_image(fake_imgs[0][0], self.save_dir, 'background')
-            self.save_image(fake_imgs[1][0], self.save_dir, 'parent_final')
-            self.save_image(fake_imgs[2][0], self.save_dir, 'child_final')
-            self.save_image(fg_imgs[0][0], self.save_dir, 'parent_foreground')
-            # self.save_image(fg_imgs[1][0], self.save_dir, 'child_foreground')
-            self.save_image(mk_imgs[0][0], self.save_dir, 'parent_mask')
-            self.save_image(mk_imgs[1][0], self.save_dir, 'child_mask')
-            self.save_image(fg_mk[0][0], self.save_dir, 'parent_foreground_masked')
-            self.save_image(fg_mk[1][0], self.save_dir, 'child_foreground_masked')
+            save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
+                          (c_mk + c_fg + c_masked), self.save_dir)
 
-            for i in range(cfg.NUM_PARTS):
-                self.save_image(c_mk[i][0], self.save_dir, 'part' + str(i) + '_mask')
-                self.save_image(c_fg[i][0], self.save_dir, 'part' + str(i) + '_foreground')
-                self.save_image(c_masked[i][0], self.save_dir, 'part' + str(i) + '_foreground_masked')
+            # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
+            # self.save_image(fake_imgs[1][0], self.save_dir, 'parent_final')
+            # self.save_image(fake_imgs[2][0], self.save_dir, 'child_final')
+            # self.save_image(fg_imgs[0][0], self.save_dir, 'parent_foreground')
+            # # self.save_image(fg_imgs[1][0], self.save_dir, 'child_foreground')
+            # self.save_image(mk_imgs[0][0], self.save_dir, 'parent_mask')
+            # self.save_image(mk_imgs[1][0], self.save_dir, 'child_mask')
+            # self.save_image(fg_mk[0][0], self.save_dir, 'parent_foreground_masked')
+            # self.save_image(fg_mk[1][0], self.save_dir, 'child_foreground_masked')
+
+            # for i in range(cfg.NUM_PARTS):
+            #     self.save_image(c_mk[i][0], self.save_dir, 'part' + str(i) + '_mask')
+            #     self.save_image(c_fg[i][0], self.save_dir, 'part' + str(i) + '_foreground')
+            #     self.save_image(c_masked[i][0], self.save_dir, 'part' + str(i) + '_foreground_masked')
 
 
     def save_image(self, images, save_dir, iname):
@@ -748,3 +750,30 @@ class FineGAN_evaluator(object):
             im = Image.fromarray(ndarr)
             im.save(full_path)
 
+
+    def save_img_eval(self, fake_imgs, pt_fake_imgs, image_dir):
+        num = cfg.TRAIN.VIS_COUNT
+        npt = cfg.NUM_PARTS
+
+        for i in range(len(fake_imgs)):
+            fake_img = fake_imgs[i][0:num]
+
+            vutils.save_image(
+                fake_img.data, '%s/fake_samples%d.png' %
+                (image_dir, i), normalize=True)
+
+        for i in range(3):
+            fake_img = pt_fake_imgs[i*npt][0:num]
+
+            # print(fake_img.size())
+
+            for j in range(1, npt):
+
+                # print(pt_fake_imgs[i*npt+j][0:num].size())
+
+                fake_img = torch.cat(
+                    (fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
+
+            vutils.save_image(
+                fake_img.data, '%s/fake_samples%d.png' %
+                (image_dir, 8+i), normalize=True)
