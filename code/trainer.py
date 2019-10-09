@@ -709,7 +709,7 @@ class FineGAN_evaluator(object):
             fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
                 netG(noise, c_code, p_code, bg_code)
 
-            save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
+            self.save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
                           (c_mk + c_fg + c_masked), self.save_dir)
 
             # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
