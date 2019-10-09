@@ -759,7 +759,7 @@ class FineGAN_evaluator(object):
 
 
     def save_img_eval(self, fake_imgs, pt_fake_imgs, image_dir):
-        num = 8
+        num = 10
         npt = cfg.NUM_PARTS
 
         # for i in range(len(fake_imgs)):
