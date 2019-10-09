@@ -760,7 +760,7 @@ class FineGAN_evaluator(object):
 
 
     def save_img_eval(self, fake_imgs, pt_fake_imgs, image_dir):
-        num = 8
+        num = 12
         npt = cfg.NUM_PARTS
 
         # for i in range(len(fake_imgs)):
@@ -787,4 +787,4 @@ class FineGAN_evaluator(object):
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
-            (image_dir, 8+i), normalize=False)
+            (image_dir, 8+i), nrow=12, normalize=True)
