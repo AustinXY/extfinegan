@@ -728,7 +728,7 @@ class FineGAN_evaluator(object):
                 netG(noise, c_code, p_code, bg_code)
 
             self.save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
-                (c_mk + c_fg + c_masked), self.save_dir)
+                c_mk, self.save_dir)
 
             # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
             # self.save_image(fake_imgs[1][0], self.save_dir, 'parent_final')
@@ -769,7 +769,7 @@ class FineGAN_evaluator(object):
             im.save(full_path)
 
 
-    def save_img_eval(self, fake_imgs, pt_fake_imgs, image_dir):
+    def save_img_eval(self, fake_imgs, c_mk, image_dir):
         num = 8
         npt = cfg.NUM_PARTS
 
@@ -785,15 +785,14 @@ class FineGAN_evaluator(object):
 
             # print(fake_img.size())
 
-        i = 0
-        fake_img = pt_fake_imgs[i*npt][0:num]
+        fake_img = c_mk[0][0:num]
         for j in range(1, npt):
             fake_img = torch.cat(
-                (fake_img, pt_fake_imgs[i*npt+j][0:num]), dim=0)
+                (fake_img, c_mk[j][0:num]), dim=0)
         # print(fake_img.size())
         for j in range(npt):
             fake_img = torch.cat(
-                (fake_img, pt_fake_imgs[i*npt+j][0:num] - pt_fake_imgs[i*npt][0:num]), dim=0)
+                (fake_img, c_mk[j][0:num] - c_mk[0][0:num]), dim=0)
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
