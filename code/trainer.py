@@ -693,6 +693,8 @@ class FineGAN_evaluator(object):
             # Uncomment this to print Generator layers
             # print(netG)
 
+            torch.manual_seed(2)
+
             nz = cfg.GAN.Z_DIM
             noise = torch.FloatTensor(self.batch_size, nz)
             noise.data.normal_(0, 1)
@@ -727,7 +729,7 @@ class FineGAN_evaluator(object):
             fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
                 netG(noise, c_code, p_code, bg_code)
 
-            self.save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
+            self.save_img_eval([],
                 c_mk, self.save_dir)
 
             # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
@@ -790,9 +792,9 @@ class FineGAN_evaluator(object):
             fake_img = torch.cat(
                 (fake_img, c_mk[j][0:num]), dim=0)
         # print(fake_img.size())
-        for j in range(npt):
-            fake_img = torch.cat(
-                (fake_img, c_mk[j][0:num] - c_mk[0][0:num]), dim=0)
+        # for j in range(npt):
+        #     fake_img = torch.cat(
+        #         (fake_img, c_mk[j][0:num] - c_mk[0][0:num]), dim=0)
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
