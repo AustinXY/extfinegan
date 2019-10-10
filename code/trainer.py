@@ -366,8 +366,9 @@ class FineGAN_trainer(object):
                 pred_c = self.netsD[2](self.fg_mk[1])[0]
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total = errG_total+ errG_info
-            elif i == 3: # Mutual information loss for the part stage (3)
-                pti_loss = []
+            elif i == 3:
+                # Mutual information loss for the part stage (3)
+                pti_mi_loss = []
                 pred_ptis = []
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
@@ -377,11 +378,20 @@ class FineGAN_trainer(object):
                     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
                     errG_total = errG_total + errG_info
 
-                    pti_loss.append(errG_info)
+                    pti_mi_loss.append(errG_info)
+
+                # Sparsity loss
+                pti_sparsity_loss = []
+                for pt in range(cfg.NUM_PARTS):
+                    errG_sparsity = torch.sum(self.c_mk[pt])
+                    errG_total = errG_total + errG_sparsity
+
+                    pti_sparsity_loss.append(errG_sparsity)
+
 
             # random generate pt
             # elif i == 3: # Mutual information loss for the part stage (3)
-            #     # pti_loss = []
+            #     # pti_mi_loss = []
             #     # pred_ptis = []
             #     pt = random.sample(range(cfg.NUM_PARTS), 1)[0]
             #     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
@@ -404,7 +414,7 @@ class FineGAN_trainer(object):
             #     errG_info = criterion_class(pred_pti, pt_li.long())
             #     errG_total = errG_total + errG_info
 
-                # pti_loss.append(errG_info)
+                # pti_mi_loss.append(errG_info)
                     # pred_ptis.append(pred_pti)
 
                     # if errG_info == 0:
@@ -432,10 +442,9 @@ class FineGAN_trainer(object):
                 if i == 3:
                     # print(count)
                     for pt in range(cfg.NUM_PARTS):
-
-                        # print(pt, pred_ptis[pt].data)
-
-                        summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_loss[pt].data[0])
+                        summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_mi_loss[pt].data[0])
+                        self.summary_writer.add_summary(summary_D_class, count)
+                        summary_D_class = summary.scalar('Part%d_Sparsity_loss' % pt, pti_sparsity_loss[pt].data[0])
                         self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
@@ -718,7 +727,7 @@ class FineGAN_evaluator(object):
                 netG(noise, c_code, p_code, bg_code)
 
             self.save_img_eval((fake_imgs + fg_imgs + mk_imgs + fg_mk),
-                          (c_mk + c_fg + c_masked), self.save_dir)
+                (c_mk + c_fg + c_masked), self.save_dir)
 
             # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
             # self.save_image(fake_imgs[1][0], self.save_dir, 'parent_final')
