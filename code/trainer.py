@@ -693,7 +693,7 @@ class FineGAN_evaluator(object):
             # Uncomment this to print Generator layers
             # print(netG)
 
-            torch.manual_seed(2)
+            torch.manual_seed(19)
 
             nz = cfg.GAN.Z_DIM
             noise = torch.FloatTensor(self.batch_size, nz)
@@ -798,4 +798,4 @@ class FineGAN_evaluator(object):
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
-            (image_dir, 8), nrow=8, normalize=False)
+            (image_dir, 8), nrow=8, normalize=True)
