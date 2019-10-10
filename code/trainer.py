@@ -796,4 +796,4 @@ class FineGAN_evaluator(object):
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
-            (image_dir, 8+i), nrow=8, normalize=True)
+            (image_dir, 8), nrow=8, normalize=True)
