@@ -791,11 +791,17 @@ class FineGAN_evaluator(object):
         for j in range(1, npt):
             fake_img = torch.cat(
                 (fake_img, c_mk[j][0:num]), dim=0)
+
+        vutils.save_image(
+            fake_img.data, '%s/fake_samples%d.png' %
+            (image_dir, 8), nrow=8, normalize=True)
+
         # print(fake_img.size())
-        for j in range(npt):
+        fake_img = c_mk[0][0:num] - c_mk[0][0:num]
+        for j in range(1, npt):
             fake_img = torch.cat(
                 (fake_img, c_mk[j][0:num] - c_mk[0][0:num]), dim=0)
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
-            (image_dir, 8), nrow=8, normalize=True)
+            (image_dir, 9), nrow=8, normalize=True)
