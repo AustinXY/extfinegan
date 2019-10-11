@@ -383,7 +383,7 @@ class FineGAN_trainer(object):
                 # Sparsity loss
                 pti_sparsity_loss = []
                 for pt in range(cfg.NUM_PARTS):
-                    errG_sparsity = torch.sum(self.c_mk[pt]) / (128 * 128 * batch_size * 5)
+                    errG_sparsity = torch.sum(self.c_mk[pt]) / (128 * 128 * batch_size * 10)
                     errG_total = errG_total + errG_sparsity
 
                     pti_sparsity_loss.append(errG_sparsity)
