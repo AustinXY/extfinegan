@@ -387,6 +387,10 @@ class FineGAN_trainer(object):
                     norm = torch.sum(self.c_mk[pt] ** 2, dim=2).view(batch_size, 1, 1, 128)
                     norm = torch.sqrt(torch.sum(norm, dim=3).view(batch_size, 1)).repeat(1, 128*128).view(batch_size, 1, 128, 128)
 
+                    print(self.c_mk[pt].size())
+                    print(norm.size())
+                    print(norm)
+
                     errG_sparsity = torch.sum(self.c_mk[pt] / norm) / (128 * 128 * batch_size * 10)
                     errG_total = errG_total + errG_sparsity
 
