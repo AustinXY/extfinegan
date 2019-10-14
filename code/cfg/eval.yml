@@ -13,7 +13,7 @@ TIED_CODES: False
 
 TRAIN:
     FLAG: False
-    NET_G: '../output/L2norm100w/Model/netG_14000.pth'
+    NET_G: '../output/L2norm100w/Model/netG_9000.pth'
     BATCH_SIZE: 12
 
 
