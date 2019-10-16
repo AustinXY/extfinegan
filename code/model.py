@@ -311,10 +311,15 @@ class G_NET(nn.Module):
         # C_masked = torch.clamp(C_masked, -1, 1)
         fg_mk.append(C_masked)
 
+        # ones_mask_c = torch.ones_like(C_m)
+        # opp_mask_c = ones_mask_c - C_m
+        # B_masked_ = torch.mul(B, opp_mask_c)
+        # C = C_masked + B_masked_
+
         ones_mask_c = torch.ones_like(C_m)
         opp_mask_c = ones_mask_c - C_m
-        B_masked_ = torch.mul(B, opp_mask_c)
-        C = C_masked + B_masked_
+        P_bg_masked = torch.mul(P, opp_mask_c)
+        C = C_masked + P_bg_masked
 
         fake_imgs.append(C)
 
