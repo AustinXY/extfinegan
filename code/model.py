@@ -299,21 +299,6 @@ class G_NET(nn.Module):
             Ci_m = self.img_net3_mask(h_code3)  # Child part i mask
             Ci_masked = torch.mul(Ci_f, Ci_m)  # Child part i foreground masked
 
-            # h_code4 = self.h_net4(h_code2, pti_code)
-            # Pti_f = self.img_net4(h_code4) # Part foreground
-            # Pti_m = self.img_net4_mask(h_code4) # Part mask
-            # Pti_masked = torch.mul(Pti_f, Pti_m) # Part foreground masked
-
-            # pt_fg.append(Pti_f)
-            # pt_mk.append(Pti_m)
-            # pt_masked.append(Pti_masked)
-
-            # Child stage
-            # h_code3 = self.h_net3(h_code4, c_code)
-            # Ci_f = self.img_net3(h_code3) # Child part i foreground
-            # Ci_m = self.img_net3_mask(h_code3) # Child part i mask
-            # Ci_masked = torch.mul(Ci_f, Ci_m) # Child part i foreground masked
-
             c_fg.append(Ci_f)
             c_mk.append(Ci_m)
             c_masked.append(Ci_masked)
@@ -328,8 +313,8 @@ class G_NET(nn.Module):
 
         ones_mask_c = torch.ones_like(C_m)
         opp_mask_c = ones_mask_c - C_m
-        P_bg_masked = torch.mul(P, opp_mask_c)
-        C = C_masked + P_bg_masked
+        B_masked_ = torch.mul(B, opp_mask_c)
+        C = C_masked + B_masked_
 
         fake_imgs.append(C)
 
