@@ -11,6 +11,7 @@ from copy import deepcopy
 import torch.backends.cudnn as cudnn
 import torch
 import torch.nn as nn
+import math
 from torch.autograd import Variable
 import torch.optim as optim
 import torchvision.utils as vutils
@@ -216,6 +217,7 @@ class FineGAN_trainer(object):
         self.data_loader = data_loader
         self.num_batches = len(self.data_loader)
 
+        self.protect_value = torch.finfo(torch.float).tiny
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
@@ -381,21 +383,16 @@ class FineGAN_trainer(object):
                     pti_mi_loss.append(errG_info)
 
                 # Sparsity loss
-                pti_sparsity_loss = []
+                pti_concentration_loss = []
                 weight = 100
                 for pt in range(cfg.NUM_PARTS):
+                    errG_concentration = 0
+                    for ix in range(batch_size):
+                        mask = self.c_mk[pt][ix].view(128, 128)
+                        errG_concentration = errG_concentration + self.concentration_loss(mask)
 
-                    norm = torch.sum(self.c_mk[pt] ** 2, dim=2).view(batch_size, 1, 1, 128)
-                    norm = torch.sqrt(torch.sum(norm, dim=3).view(batch_size, 1)).repeat(1, 128*128).view(batch_size, 1, 128, 128)
-
-                    # print(self.c_mk[pt].size())
-                    # print(norm.size())
-                    # print(norm)
-
-                    errG_sparsity = weight * torch.sum(self.c_mk[pt] / norm) / (128 * 128 * batch_size)
-                    errG_total = errG_total + errG_sparsity
-
-                    pti_sparsity_loss.append(errG_sparsity)
+                    errG_total = errG_total + errG_concentration
+                    pti_concentration_loss.append(errG_concentration)
 
 
             # random generate pt
@@ -454,13 +451,27 @@ class FineGAN_trainer(object):
                         summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_mi_loss[pt].data[0])
                         self.summary_writer.add_summary(summary_D_class, count)
 
-                        summary_D_class = summary.scalar('Part%d_Sparsity_loss' % pt, pti_sparsity_loss[pt].data[0])
+                        summary_D_class = summary.scalar('Part%d_Concentraion_loss' % pt, pti_concentration_loss[pt].data[0])
                         self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
             self.optimizerG[myit].step()
         return errG_total
+
+
+    def concentration_loss(self, mask):
+        xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
+        _sum = torch.sum(mask) + self.protect_value
+        x_mean = torch.sum(mask * xv) / _sum
+        y_mean = torch.sum(mask * yv) / _sum
+
+        x_variance = torch.sum((xv - x_mean).pow(2).float() * mask) / _sum
+        y_variance = torch.sum((yv - y_mean).pow(2).float() * mask) / _sum
+
+        Lconc = 2 * math.pi * math.e * (x_variance + y_variance).pow(2)
+        return Lconc
+
 
     def train(self):
         self.netG, self.netsD, self.num_Ds, start_count = load_network(self.gpus)
@@ -814,49 +825,3 @@ class FineGAN_evaluator(object):
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
             (image_dir, 9), nrow=8, normalize=True)
-
-def concentration_loss(mask):
-    _sum = torch.sum(mask)
-
-
-
-    loss = 0
-    feature_input = self.act(feature_input)
-    # input B * W * H * C
-    channel_size = feature_input.size()[3]
-    batch_size = feature_input.size()[0]
-    # create grid map 13 * 13
-    xv, yv = torch.meshgrid([torch.arange(1, self.grid_size), torch.arange(1, self.grid_size)])
-    # expand to feature channel grid, 13 * 13 * C
-    xv = xv.unsqueeze(2).repeat(1, 1, channel_size).cuda()
-    yv = yv.unsqueeze(2).repeat(1, 1, channel_size).cuda()
-
-    # expand dim to batch
-    xv = xv.unsqueeze(0).repeat(batch_size, 1, 1, 1).float().cuda()
-    yv = yv.unsqueeze(0).repeat(batch_size, 1, 1, 1).float().cuda()
-
-    for batch_index in range(0, batch_size):
-        for channel_index in range(0, channel_size):
-            # Calculate mass of x,y coordinate
-            xv_energy_map = xv[batch_index,:,:,channel_index] * feature_input[batch_index,:,:,channel_index]
-            mass_xv = xv_energy_map.sum() / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value)
-            yv_energy_map = yv[batch_index,:,:,channel_index] * feature_input[batch_index,:,:,channel_index]
-            mass_yv = yv_energy_map.sum() / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value)
-
-            # Calculate covanrance
-            # ((X - Xmean)^2 * k_weight).sum() / k_weight.sum()
-            x_variance = (((xv[batch_index, :, :, channel_index] - mass_xv)).pow(2).float() * feature_input[batch_index,:,:,channel_index]).sum()
-            # normalize
-            x_variance = (x_variance / 169 / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value))
-
-            # Calculate covanrance
-            # # ((Y - Ymean)^2 * y_weight).sum() / k_weight.sum()
-            y_variance = (((yv[batch_index, :, :, channel_index] - mass_yv)).pow(2).float() * feature_input[batch_index,:,:,channel_index]).sum()
-            # normalize
-            y_variance = (y_variance / 169 / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value))
-
-            # Det xy == 2 * pi * e * (x + y) ^2 / (scaling_factor) * self.z (math.exp(math.log(2*math.pi) + 1.))
-            det_xy = (x_variance + y_variance).pow(2) * self.z # .pow(2) # + self.z
-            # Final loss
-            loss += det_xy
-    self.loss = loss / batch_size / channel_size
