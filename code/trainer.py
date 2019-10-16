@@ -814,3 +814,49 @@ class FineGAN_evaluator(object):
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
             (image_dir, 9), nrow=8, normalize=True)
+
+def concentration_loss(mask):
+    _sum = torch.sum(mask)
+
+
+
+    loss = 0
+    feature_input = self.act(feature_input)
+    # input B * W * H * C
+    channel_size = feature_input.size()[3]
+    batch_size = feature_input.size()[0]
+    # create grid map 13 * 13
+    xv, yv = torch.meshgrid([torch.arange(1, self.grid_size), torch.arange(1, self.grid_size)])
+    # expand to feature channel grid, 13 * 13 * C
+    xv = xv.unsqueeze(2).repeat(1, 1, channel_size).cuda()
+    yv = yv.unsqueeze(2).repeat(1, 1, channel_size).cuda()
+
+    # expand dim to batch
+    xv = xv.unsqueeze(0).repeat(batch_size, 1, 1, 1).float().cuda()
+    yv = yv.unsqueeze(0).repeat(batch_size, 1, 1, 1).float().cuda()
+
+    for batch_index in range(0, batch_size):
+        for channel_index in range(0, channel_size):
+            # Calculate mass of x,y coordinate
+            xv_energy_map = xv[batch_index,:,:,channel_index] * feature_input[batch_index,:,:,channel_index]
+            mass_xv = xv_energy_map.sum() / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value)
+            yv_energy_map = yv[batch_index,:,:,channel_index] * feature_input[batch_index,:,:,channel_index]
+            mass_yv = yv_energy_map.sum() / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value)
+
+            # Calculate covanrance
+            # ((X - Xmean)^2 * k_weight).sum() / k_weight.sum()
+            x_variance = (((xv[batch_index, :, :, channel_index] - mass_xv)).pow(2).float() * feature_input[batch_index,:,:,channel_index]).sum()
+            # normalize
+            x_variance = (x_variance / 169 / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value))
+
+            # Calculate covanrance
+            # # ((Y - Ymean)^2 * y_weight).sum() / k_weight.sum()
+            y_variance = (((yv[batch_index, :, :, channel_index] - mass_yv)).pow(2).float() * feature_input[batch_index,:,:,channel_index]).sum()
+            # normalize
+            y_variance = (y_variance / 169 / (feature_input[batch_index,:,:,channel_index].sum() + self.protect_value))
+
+            # Det xy == 2 * pi * e * (x + y) ^2 / (scaling_factor) * self.z (math.exp(math.log(2*math.pi) + 1.))
+            det_xy = (x_variance + y_variance).pow(2) * self.z # .pow(2) # + self.z
+            # Final loss
+            loss += det_xy
+    self.loss = loss / batch_size / channel_size
