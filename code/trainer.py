@@ -384,7 +384,7 @@ class FineGAN_trainer(object):
 
                 # Sparsity loss
                 pti_concentration_loss = []
-                weight = 1e-3
+                weight = 1e-5
                 for pt in range(cfg.NUM_PARTS):
                     errG_concentration = 0
                     for ix in range(batch_size):
