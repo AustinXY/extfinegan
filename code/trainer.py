@@ -462,6 +462,7 @@ class FineGAN_trainer(object):
 
     def concentration_loss(self, mask):
         xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
+        xv, yv = xv.float().cuda(), yv.float().cuda()
         _sum = torch.sum(mask) + self.protect_value
         x_mean = torch.sum(mask * xv) / _sum
         y_mean = torch.sum(mask * yv) / _sum
