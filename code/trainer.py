@@ -750,6 +750,16 @@ class FineGAN_evaluator(object):
             fake_imgs, fg_imgs, mk_imgs, fg_mk, c_mk, c_fg, c_masked = \
                 netG(noise, c_code, p_code, bg_code)
 
+            vutils.save_image(
+                mk_imgs[0].data, '%s/parent_mask.png' %
+                (self.save_dir), nrow=8, normalize=True)
+            vutils.save_image(
+                mk_imgs[1].data, '%s/child_mask.png' %
+                (self.save_dir), nrow=8, normalize=True)
+            vutils.save_image(
+                (mk_imgs[0]+mk_imgs[1]).data, '%s/parent_mask+child_mask.png' %
+                (self.save_dir), nrow=8, normalize=True)
+
             self.save_img_eval([],
                 c_mk, self.save_dir)
 
@@ -825,4 +835,4 @@ class FineGAN_evaluator(object):
 
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
-            (image_dir, 9), nrow=8, normalize=True)
+            (image_dir, 9), nrow=8, normalize=False)
