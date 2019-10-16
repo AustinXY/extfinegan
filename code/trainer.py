@@ -217,7 +217,7 @@ class FineGAN_trainer(object):
         self.data_loader = data_loader
         self.num_batches = len(self.data_loader)
 
-        self.protect_value = torch.finfo(torch.float).tiny
+        self.protect_value = 1e-10
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
