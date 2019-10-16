@@ -751,13 +751,13 @@ class FineGAN_evaluator(object):
                 netG(noise, c_code, p_code, bg_code)
 
             vutils.save_image(
-                mk_imgs[0].data, '%s/parent_mask.png' %
+                mk_imgs[0][0:8].data, '%s/parent_mask.png' %
                 (self.save_dir), nrow=8, normalize=True)
             vutils.save_image(
-                mk_imgs[1].data, '%s/child_mask.png' %
+                mk_imgs[1][0:8].data, '%s/child_mask.png' %
                 (self.save_dir), nrow=8, normalize=True)
             vutils.save_image(
-                (mk_imgs[0]+mk_imgs[1]).data, '%s/parent_mask+child_mask.png' %
+                (mk_imgs[0]+mk_imgs[1])[0:8].data, '%s/parent_mask+child_mask.png' %
                 (self.save_dir), nrow=8, normalize=True)
 
             self.save_img_eval([],
