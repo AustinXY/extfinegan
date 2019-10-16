@@ -389,7 +389,7 @@ class FineGAN_trainer(object):
                     errG_concentration = 0
                     for ix in range(batch_size):
                         mask = self.c_mk[pt][ix].view(128, 128)
-                        errG_concentration = errG_concentration + self.concentration_loss(mask)
+                        errG_concentration = errG_concentration + self.concentration_loss(mask) / (128 * 128 * batch_size)
 
                     errG_total = errG_total + errG_concentration
                     pti_concentration_loss.append(errG_concentration)
