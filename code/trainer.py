@@ -819,6 +819,7 @@ class FineGAN_evaluator(object):
             # print(fake_img.size())
 
         fake_img = c_mk[0][0:num]
+        print(fake_img.dtype)
         for j in range(1, npt):
             fake_img = torch.cat(
                 (fake_img, c_mk[j][0:num]), dim=0)
