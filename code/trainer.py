@@ -218,7 +218,7 @@ class FineGAN_trainer(object):
         self.num_batches = len(self.data_loader)
 
         self.protect_value = 1e-8
-        self.cos = nn.CosineSimilarity(dim=0)
+        self.cos = nn.CosineSimilarity(dim=1)
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
