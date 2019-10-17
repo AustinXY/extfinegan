@@ -406,6 +406,12 @@ class FineGAN_trainer(object):
                 errG_cossim = errG_cossim * weight
                 errG_total = errG_total + errG_cossim
 
+                # parent mask similarity loss
+                weight = 1e-1
+                pcmk_sim = self.cos(self.mk_imgs[0].view(batch_size, -1), self.mk_imgs[1].view(batch_size, -1))
+                errG_pmk_simloss = torch.sum(1 - pcmk_sim) * weight
+                errG_total = errG_total + errG_pmk_simloss
+
             # random generate pt
             # elif i == 3: # Mutual information loss for the part stage (3)
             #     # pti_mi_loss = []
@@ -465,6 +471,9 @@ class FineGAN_trainer(object):
                     self.summary_writer.add_summary(summary_D_class, count)
 
                     summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
+
+                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
