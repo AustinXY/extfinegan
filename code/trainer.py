@@ -217,7 +217,8 @@ class FineGAN_trainer(object):
         self.data_loader = data_loader
         self.num_batches = len(self.data_loader)
 
-        self.protect_value = 1e-10
+        self.protect_value = 1e-8
+        self.cos = nn.CosineSimilarity(dim=0)
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
@@ -370,30 +371,40 @@ class FineGAN_trainer(object):
                 errG_total = errG_total+ errG_info
             elif i == 3:
                 # Mutual information loss for the part stage (3)
-                pti_mi_loss = []
-                pred_ptis = []
+                errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
                     pred_pti = self.netsD[3](self.c_mk[pt])[0]
-                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total = errG_total + errG_info
+                    errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
 
-                    pti_mi_loss.append(errG_info)
+                errG_total = errG_total + errG_info
 
-                # Sparsity loss
-                pti_concentration_loss = []
+                # concentration loss
                 weight = 1e-4
+                errG_concentration = 0
                 for pt in range(cfg.NUM_PARTS):
-                    errG_concentration = 0
+                    Lconc_batch = 0
                     for ix in range(batch_size):
                         mask = self.c_mk[pt][ix].view(128, 128)
-                        errG_concentration = errG_concentration + weight * self.concentration_loss(mask) / (128 * 128 * batch_size)
+                        Lconc_batch = Lconc_batch + self.concentration_loss(mask) / (128 * 128 * batch_size)
 
-                    errG_total = errG_total + errG_concentration
-                    pti_concentration_loss.append(errG_concentration)
+                    errG_concentration = errG_concentration + Lconc_batch
 
+                errG_concentration = errG_concentration * weight
+                errG_total = errG_total + errG_concentration
+
+                # consine similarity loss
+                weight = 1e-2
+                errG_cossim = 0
+                for pti in range(cfg.NUM_PARTS-1):
+                    for ptj in range(pti+1, cfg.NUM_PARTS):
+                        sim = cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
+                        errG_cossim = errG_cossim + torch.sum(sim)
+
+                errG_cossim = errG_cossim * weight
+                errG_total = errG_total + errG_cossim
 
             # random generate pt
             # elif i == 3: # Mutual information loss for the part stage (3)
@@ -447,12 +458,14 @@ class FineGAN_trainer(object):
 
                 if i == 3:
                     # print(count)
-                    for pt in range(cfg.NUM_PARTS):
-                        summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_mi_loss[pt].data[0])
-                        self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
-                        summary_D_class = summary.scalar('Part%d_Concentraion_loss' % pt, pti_concentration_loss[pt].data[0])
-                        self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
+
+                    summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
