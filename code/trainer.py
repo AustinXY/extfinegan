@@ -408,8 +408,8 @@ class FineGAN_trainer(object):
 
                 # parent mask similarity loss
                 weight = 1e-1
-                pcmk_sim = self.cos(self.mk_imgs[0].view(batch_size, -1), self.mk_imgs[1].view(batch_size, -1))
-                errG_pmk_simloss = torch.sum(1 - pcmk_sim) * weight
+                pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
+                errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
             # random generate pt
