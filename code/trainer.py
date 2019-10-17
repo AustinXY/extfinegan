@@ -400,7 +400,7 @@ class FineGAN_trainer(object):
                 errG_cossim = 0
                 for pti in range(cfg.NUM_PARTS-1):
                     for ptj in range(pti+1, cfg.NUM_PARTS):
-                        sim = cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
+                        sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
                         errG_cossim = errG_cossim + torch.sum(sim)
 
                 errG_cossim = errG_cossim * weight
