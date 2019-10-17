@@ -396,7 +396,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_concentration
 
                 # consine similarity loss
-                weight = 1e-1
+                weight = 1
                 errG_cossim = 0
                 for pti in range(cfg.NUM_PARTS-1):
                     for ptj in range(pti+1, cfg.NUM_PARTS):
