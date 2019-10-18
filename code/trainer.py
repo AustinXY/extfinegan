@@ -395,16 +395,16 @@ class FineGAN_trainer(object):
                 # errG_concentration = errG_concentration * weight
                 # errG_total = errG_total + errG_concentration
 
-                # # consine similarity loss
-                # weight = 1
-                # errG_cossim = 0
-                # for pti in range(cfg.NUM_PARTS-1):
-                #     for ptj in range(pti+1, cfg.NUM_PARTS):
-                #         sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
-                #         errG_cossim = errG_cossim + torch.sum(sim)
+                # consine similarity loss
+                weight = 1e-1
+                errG_cossim = 0
+                for pti in range(cfg.NUM_PARTS-1):
+                    for ptj in range(pti+1, cfg.NUM_PARTS):
+                        sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
+                        errG_cossim = errG_cossim + torch.sum(sim)
 
-                # errG_cossim = errG_cossim * weight
-                # errG_total = errG_total + errG_cossim
+                errG_cossim = errG_cossim * weight
+                errG_total = errG_total + errG_cossim
 
                 # # parent mask similarity loss
                 # weight = 1e-1
@@ -470,8 +470,8 @@ class FineGAN_trainer(object):
                     # summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
                     # self.summary_writer.add_summary(summary_D_class, count)
 
-                    # summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
-                    # self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
                     # summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
                     # self.summary_writer.add_summary(summary_D_class, count)
