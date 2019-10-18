@@ -467,14 +467,14 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
