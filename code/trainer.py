@@ -381,6 +381,18 @@ class FineGAN_trainer(object):
 
                 errG_total = errG_total + errG_info
 
+                # # Sparsity loss (w/ L2 normalization)
+                # weight = 100
+                # errG_sparsity = 0
+                # for pt in range(cfg.NUM_PARTS):
+                #     norm = torch.sum(self.c_mk[pt] ** 2, dim=2).view(batch_size, 1, 1, 128)
+                #     norm = torch.sqrt(torch.sum(norm, dim=3).view(batch_size, 1)).repeat(1, 128*128).view(batch_size, 1, 128, 128)
+                #     errG_sparsity = errG_sparsity + torch.sum(self.c_mk[pt] / norm) / (128 * 128 * batch_size)
+
+                # errG_sparsity = errG_sparsity * weight
+                # errG_total = errG_total + errG_sparsity
+
+
                 # concentration loss
                 weight = 1e-4
                 errG_concentration = 0
@@ -412,47 +424,6 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
-            # random generate pt
-            # elif i == 3: # Mutual information loss for the part stage (3)
-            #     # pti_mi_loss = []
-            #     # pred_ptis = []
-            #     pt = random.sample(range(cfg.NUM_PARTS), 1)[0]
-            #     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
-            #     pti_code[:, pt] = 1
-
-            #     pred_pti = self.netsD[3](self.c_mk[pt])[0]
-            #     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-            #     errG_total = errG_total + errG_info
-
-            # random generate pt
-            # elif i == 3: # Mutual information loss for the part stage (3)
-            #     pt_li = torch.randint(4, (10,))
-            #     Ci_m = self.c_mk[pt_li[0].int().item()][0:1]
-            #     for ix, pt in enumerate(pt_li[1:]):
-            #         temp_Ci_m = self.c_mk[pt.int().item()][ix:ix+1]
-            #         Ci_m = torch.cat((Ci_m, temp_Ci_m), dim=0)
-
-            #     pred_pti = self.netsD[3](Ci_m)[0]
-            #     pt_li = pt_li.cuda()
-            #     errG_info = criterion_class(pred_pti, pt_li.long())
-            #     errG_total = errG_total + errG_info
-
-                # pti_mi_loss.append(errG_info)
-                    # pred_ptis.append(pred_pti)
-
-                    # if errG_info == 0:
-                    #     f = True
-
-            # if f:
-            #     f = False
-            #     print('\n0 part loss:')
-            #     for pt in range(cfg.NUM_PARTS):
-            #         print(str(pt) + ':')
-            #         print(pred_ptis[pt].data)
-
-            # if i > 0:
-            #     errG_total = errG_total + errG_info
-
             if flag == 0:
                 if i == 1 or i == 2:
                     summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data[0])
@@ -466,6 +437,9 @@ class FineGAN_trainer(object):
                     # print(count)
                     summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
+
+                    # summary_D_class = summary.scalar('Sparsity_loss', errG_sparsity.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
                     summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
