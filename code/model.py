@@ -216,6 +216,7 @@ class G_NET(nn.Module):
         self.define_module()
         self.upsampling = Upsample(scale_factor=2, mode='bilinear')
         self.scale_fimg = nn.UpsamplingBilinear2d(size = [126, 126])
+        self.softmax = nn.Softmax(dim=1)
 
     def define_module(self):
 
@@ -296,7 +297,10 @@ class G_NET(nn.Module):
 
             h_code3 = self.h_net3(h_code2, in_code)
             Ci_f = self.img_net3(h_code3)  # Child part i foreground
-            Ci_m = self.img_net3_mask(h_code3)  # Child part i mask
+            temp_mk = self.img_net3_mask(h_code3)  # Child part i mask
+
+            Ci_m = self.softmax(temp_mk.view(batch_size, -1)).view(batch_size, 1, 128, 128)
+
             Ci_masked = torch.mul(Ci_f, Ci_m)  # Child part i foreground masked
 
             c_fg.append(Ci_f)
