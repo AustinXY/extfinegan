@@ -368,76 +368,14 @@ class FineGAN_trainer(object):
                 errG_total = errG_total+ errG_info
             elif i == 3:
                 # Mutual information loss for the part stage (3)
-                pti_mi_loss = []
-                pred_ptis = []
+                errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
-
                     pred_pti = self.netsD[3](self.c_mk[pt])[0]
-                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total = errG_total + errG_info
+                    errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
 
-                    pti_mi_loss.append(errG_info)
-
-                # Sparsity loss
-                pti_sparsity_loss = []
-                weight = 100
-                for pt in range(cfg.NUM_PARTS):
-
-                    norm = torch.sum(self.c_mk[pt] ** 2, dim=2).view(batch_size, 1, 1, 128)
-                    norm = torch.sqrt(torch.sum(norm, dim=3).view(batch_size, 1)).repeat(1, 128*128).view(batch_size, 1, 128, 128)
-
-                    # print(self.c_mk[pt].size())
-                    # print(norm.size())
-                    # print(norm)
-
-                    errG_sparsity = weight * torch.sum(self.c_mk[pt] / norm) / (128 * 128 * batch_size)
-                    errG_total = errG_total + errG_sparsity
-
-                    pti_sparsity_loss.append(errG_sparsity)
-
-
-            # random generate pt
-            # elif i == 3: # Mutual information loss for the part stage (3)
-            #     # pti_mi_loss = []
-            #     # pred_ptis = []
-            #     pt = random.sample(range(cfg.NUM_PARTS), 1)[0]
-            #     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
-            #     pti_code[:, pt] = 1
-
-            #     pred_pti = self.netsD[3](self.c_mk[pt])[0]
-            #     errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-            #     errG_total = errG_total + errG_info
-
-            # random generate pt
-            # elif i == 3: # Mutual information loss for the part stage (3)
-            #     pt_li = torch.randint(4, (10,))
-            #     Ci_m = self.c_mk[pt_li[0].int().item()][0:1]
-            #     for ix, pt in enumerate(pt_li[1:]):
-            #         temp_Ci_m = self.c_mk[pt.int().item()][ix:ix+1]
-            #         Ci_m = torch.cat((Ci_m, temp_Ci_m), dim=0)
-
-            #     pred_pti = self.netsD[3](Ci_m)[0]
-            #     pt_li = pt_li.cuda()
-            #     errG_info = criterion_class(pred_pti, pt_li.long())
-            #     errG_total = errG_total + errG_info
-
-                # pti_mi_loss.append(errG_info)
-                    # pred_ptis.append(pred_pti)
-
-                    # if errG_info == 0:
-                    #     f = True
-
-            # if f:
-            #     f = False
-            #     print('\n0 part loss:')
-            #     for pt in range(cfg.NUM_PARTS):
-            #         print(str(pt) + ':')
-            #         print(pred_ptis[pt].data)
-
-            # if i > 0:
-            #     errG_total = errG_total + errG_info
+                errG_total = errG_total + errG_info
 
             if flag == 0:
                 if i == 1 or i == 2:
@@ -449,13 +387,8 @@ class FineGAN_trainer(object):
                     self.summary_writer.add_summary(summary_D, count)
 
                 if i == 3:
-                    # print(count)
-                    for pt in range(cfg.NUM_PARTS):
-                        summary_D_class = summary.scalar('Part%d_Information_loss' % pt, pti_mi_loss[pt].data[0])
-                        self.summary_writer.add_summary(summary_D_class, count)
-
-                        summary_D_class = summary.scalar('Part%d_Sparsity_loss' % pt, pti_sparsity_loss[pt].data[0])
-                        self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
