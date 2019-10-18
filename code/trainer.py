@@ -381,36 +381,36 @@ class FineGAN_trainer(object):
 
                 errG_total = errG_total + errG_info
 
-                # concentration loss
-                weight = 1e-4
-                errG_concentration = 0
-                for pt in range(cfg.NUM_PARTS):
-                    Lconc_batch = 0
-                    for ix in range(batch_size):
-                        mask = self.c_mk[pt][ix].view(128, 128)
-                        Lconc_batch = Lconc_batch + self.concentration_loss(mask) / (128 * 128 * batch_size)
+                # # concentration loss
+                # weight = 1e-4
+                # errG_concentration = 0
+                # for pt in range(cfg.NUM_PARTS):
+                #     Lconc_batch = 0
+                #     for ix in range(batch_size):
+                #         mask = self.c_mk[pt][ix].view(128, 128)
+                #         Lconc_batch = Lconc_batch + self.concentration_loss(mask) / (128 * 128 * batch_size)
 
-                    errG_concentration = errG_concentration + Lconc_batch
+                #     errG_concentration = errG_concentration + Lconc_batch
 
-                errG_concentration = errG_concentration * weight
-                errG_total = errG_total + errG_concentration
+                # errG_concentration = errG_concentration * weight
+                # errG_total = errG_total + errG_concentration
 
-                # consine similarity loss
-                weight = 1
-                errG_cossim = 0
-                for pti in range(cfg.NUM_PARTS-1):
-                    for ptj in range(pti+1, cfg.NUM_PARTS):
-                        sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
-                        errG_cossim = errG_cossim + torch.sum(sim)
+                # # consine similarity loss
+                # weight = 1
+                # errG_cossim = 0
+                # for pti in range(cfg.NUM_PARTS-1):
+                #     for ptj in range(pti+1, cfg.NUM_PARTS):
+                #         sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
+                #         errG_cossim = errG_cossim + torch.sum(sim)
 
-                errG_cossim = errG_cossim * weight
-                errG_total = errG_total + errG_cossim
+                # errG_cossim = errG_cossim * weight
+                # errG_total = errG_total + errG_cossim
 
-                # parent mask similarity loss
-                weight = 1e-1
-                pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
-                errG_pmk_simloss = pcmk_dist * weight
-                errG_total = errG_total + errG_pmk_simloss
+                # # parent mask similarity loss
+                # weight = 1e-1
+                # pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
+                # errG_pmk_simloss = pcmk_dist * weight
+                # errG_total = errG_total + errG_pmk_simloss
 
             # random generate pt
             # elif i == 3: # Mutual information loss for the part stage (3)
