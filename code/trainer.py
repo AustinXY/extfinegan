@@ -407,22 +407,15 @@ class FineGAN_trainer(object):
                 errG_concentration = errG_concentration * weight
                 errG_total = errG_total + errG_concentration
 
-                # consine similarity loss
-                weight = 1
-                errG_cossim = 0
-                for pti in range(cfg.NUM_PARTS-1):
-                    for ptj in range(pti+1, cfg.NUM_PARTS):
-                        sim = self.cos(self.c_mk[pti].view(batch_size, -1), self.c_mk[ptj].view(batch_size, -1))
-                        errG_cossim = errG_cossim + torch.sum(sim)
+                # separation loss
+                weight = 1e-4
+                errG_separation = 0
+                for ix in range(batch_size):
+                    Lsep_batch = self.separation_loss(self.c_mk, ix)
+                    errG_separation = errG_separation + Lsep_batch
 
-                errG_cossim = errG_cossim * weight
-                errG_total = errG_total + errG_cossim
-
-                # parent mask similarity loss
-                weight = 1e-1
-                pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
-                errG_pmk_simloss = pcmk_dist * weight
-                errG_total = errG_total + errG_pmk_simloss
+                errG_separation = errG_separation * weight
+                errG_total = errG_total + errG_separation
 
             if flag == 0:
                 if i == 1 or i == 2:
@@ -444,11 +437,14 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    summary_D_class = summary.scalar('Part_Separation_loss', errG_separation.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
+
+                    # summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
@@ -468,6 +464,33 @@ class FineGAN_trainer(object):
 
         Lconc = 2 * math.pi * math.e * (x_variance + y_variance).pow(2)
         return Lconc
+
+    def separation_loss(self, c_mk, ix):
+        const = 0.4
+        x_li = []
+        y_li = []
+        for pt in cfg.NUM_PARTS:
+            mask = c_mk[ix][pt]
+            xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
+            xv, yv = xv.float().cuda(), yv.float().cuda()
+            _sum = torch.sum(mask) + self.protect_value
+            x_mean = torch.sum(mask * xv) / _sum
+            y_mean = torch.sum(mask * yv) / _sum
+
+            x_li.append(x_mean)
+            y_li.append(y_mean)
+
+        x_avg = sum(x_li) / cfg.NUM_PARTS
+        y_avg = sum(y_li) / cfg.NUM_PARTS
+
+        Lsep = 0
+        for pt in cfg.NUM_PARTS:
+            x_mean = x_li[pt]
+            y_mean = y_li[pt]
+
+            Lsep = Lsep + torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const)
+
+        return Lsep
 
 
     def train(self):
