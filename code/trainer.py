@@ -467,7 +467,7 @@ class FineGAN_trainer(object):
         return Lconc
 
     def separation_loss(self, c_mk, ix):
-        const = 10
+        const = 100
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
@@ -481,15 +481,14 @@ class FineGAN_trainer(object):
             x_li.append(x_mean)
             y_li.append(y_mean)
 
-        x_avg = sum(x_li) / cfg.NUM_PARTS
-        y_avg = sum(y_li) / cfg.NUM_PARTS
-
         Lsep = 0
         for pt in range(cfg.NUM_PARTS):
             x_mean = x_li[pt]
             y_mean = y_li[pt]
-
-            Lsep = Lsep + torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const)
+            for pt_ in range(pt+1, cfg.NUM_PARTS):
+                x_mean_ = x_li[pt_]
+                y_mean_ = y_li[pt_]
+                Lsep = Lsep + torch.exp(-((x_mean - x_mean_) ** 2 + (y_mean - y_mean_) ** 2) / const)
 
         return Lsep
 
