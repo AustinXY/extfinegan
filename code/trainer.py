@@ -885,11 +885,11 @@ class FineGAN_evaluator(object):
         x_avg = sum(x_li) / cfg.NUM_PARTS
         y_avg = sum(y_li) / cfg.NUM_PARTS
 
-        li.append((x_avg, y_avg))
+        li.append((x_avg.item(), y_avg.item()))
         print(li)
 
         for pt in range(cfg.NUM_PARTS):
             x_mean = x_li[pt]
             y_mean = y_li[pt]
 
-            print(torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const))
+            print(torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const).item())
