@@ -754,8 +754,8 @@ class FineGAN_evaluator(object):
             p_li = torch.randint(cfg.SUPER_CATEGORIES, (self.batch_size,))
             torch.manual_seed(2)
             c_li = torch.randint(cfg.FINE_GRAINED_CATEGORIES, (self.batch_size,))
-            print(p_li)
-            print(c_li)
+            # print(p_li)
+            # print(c_li)
 
             bg_code = torch.zeros([self.batch_size, cfg.FINE_GRAINED_CATEGORIES])
             p_code = torch.zeros([self.batch_size, cfg.SUPER_CATEGORIES])
@@ -875,5 +875,5 @@ class FineGAN_evaluator(object):
             x_mean = torch.sum(mask * xv) / _sum
             y_mean = torch.sum(mask * yv) / _sum
 
-            li.append((x_mean, y_mean))
+            li.append((x_mean.item(), y_mean.item()))
         print(li)
