@@ -417,6 +417,7 @@ class FineGAN_trainer(object):
                 errG_separation = errG_separation * weight
                 errG_total = errG_total + errG_separation
 
+
             if flag == 0:
                 if i == 1 or i == 2:
                     summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data[0])
@@ -469,7 +470,7 @@ class FineGAN_trainer(object):
         const = 0.4
         x_li = []
         y_li = []
-        for pt in cfg.NUM_PARTS:
+        for pt in range(cfg.NUM_PARTS):
             mask = c_mk[ix][pt]
             xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
             xv, yv = xv.float().cuda(), yv.float().cuda()
@@ -484,7 +485,7 @@ class FineGAN_trainer(object):
         y_avg = sum(y_li) / cfg.NUM_PARTS
 
         Lsep = 0
-        for pt in cfg.NUM_PARTS:
+        for pt in range(cfg.NUM_PARTS):
             x_mean = x_li[pt]
             y_mean = y_li[pt]
 
