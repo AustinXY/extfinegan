@@ -394,7 +394,7 @@ class FineGAN_trainer(object):
 
 
                 # concentration loss
-                weight = 1e-2
+                weight = 1e-4
                 errG_concentration = 0
                 for pt in range(cfg.NUM_PARTS):
                     Lconc_batch = 0
