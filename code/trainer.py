@@ -467,7 +467,7 @@ class FineGAN_trainer(object):
         return Lconc
 
     def separation_loss(self, c_mk, ix):
-        const = 100
+        const = 10
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
