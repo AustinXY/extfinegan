@@ -780,8 +780,12 @@ class FineGAN_evaluator(object):
                 (mk_imgs[0]+mk_imgs[1])[0:8].data, '%s/parent_mask+child_mask.png' %
                 (self.save_dir), nrow=8, normalize=True)
 
-            self.save_img_eval([],
-                c_mk, self.save_dir)
+            # get diff of masks
+            self.save_img_eval([], c_mk, self.save_dir)
+
+            for ix in range(8):
+                self.print_center_pt(c_mk, ix)
+
 
             # self.save_image(fake_imgs[0][0], self.save_dir, 'background')
             # self.save_image(fake_imgs[1][0], self.save_dir, 'parent_final')
@@ -822,6 +826,7 @@ class FineGAN_evaluator(object):
             im.save(full_path)
 
 
+    # save diff masks
     def save_img_eval(self, fake_imgs, c_mk, image_dir):
         num = 8
         npt = cfg.NUM_PARTS
@@ -857,3 +862,17 @@ class FineGAN_evaluator(object):
         vutils.save_image(
             fake_img.data, '%s/fake_samples%d.png' %
             (image_dir, 9), nrow=8, normalize=False)
+
+    def print_center_pt(self, c_mk, ix):
+        protect_value = 1e-8
+        li = []
+        for pt in range(cfg.NUM_PARTS):
+            mask = c_mk[pt][ix]
+            xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
+            xv, yv = xv.float().cuda(), yv.float().cuda()
+            _sum = torch.sum(mask) + protect_value
+            x_mean = torch.sum(mask * xv) / _sum
+            y_mean = torch.sum(mask * yv) / _sum
+
+            li.append((x_mean, y_mean))
+        print(li)
