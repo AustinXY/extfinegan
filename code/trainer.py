@@ -394,7 +394,7 @@ class FineGAN_trainer(object):
 
 
                 # concentration loss
-                weight = 1e-4
+                weight = 1e-3
                 errG_concentration = 0
                 for pt in range(cfg.NUM_PARTS):
                     Lconc_batch = 0
@@ -408,7 +408,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_concentration
 
                 # separation loss
-                weight = 1e-2
+                weight = 1e-1
                 errG_separation = 0
                 for ix in range(batch_size):
                     Lsep_batch = self.separation_loss(self.c_mk, ix)
@@ -866,7 +866,6 @@ class FineGAN_evaluator(object):
     def print_center_pt(self, c_mk, ix):
         protect_value = 1e-8
         const = 10
-        li = []
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
@@ -881,14 +880,13 @@ class FineGAN_evaluator(object):
             x_li.append(x_mean)
             y_li.append(y_mean)
 
-        x_avg = sum(x_li) / cfg.NUM_PARTS
-        y_avg = sum(y_li) / cfg.NUM_PARTS
-
-        li.append((x_avg.item(), y_avg.item()))
-        print(li)
-
         for pt in range(cfg.NUM_PARTS):
             x_mean = x_li[pt]
             y_mean = y_li[pt]
+            for pt_ in range(pt+1, cfg.NUM_PARTS):
+                x_mean_ = x_li[pt_]
+                y_mean_ = y_li[pt_]
+                temp = torch.exp(-((x_mean - x_mean_) ** 2 + (y_mean - y_mean_) ** 2) / const)
 
-            print(torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const).item())
+                temp_li = [(x_mean.item(), y_mean.item()), (x_mean_.item(), y_mean_.item()), temp.item()]
+                print(temp_li)
