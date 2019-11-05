@@ -876,7 +876,6 @@ class FineGAN_evaluator(object):
             x_mean = torch.sum(mask * xv) / _sum
             y_mean = torch.sum(mask * yv) / _sum
 
-            li.append((x_mean.item(), y_mean.item()))
             x_li.append(x_mean)
             y_li.append(y_mean)
 
