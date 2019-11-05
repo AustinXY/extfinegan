@@ -408,7 +408,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_concentration
 
                 # separation loss
-                weight = 1e-4
+                weight = 1e-1
                 errG_separation = 0
                 for ix in range(batch_size):
                     Lsep_batch = self.separation_loss(self.c_mk, ix)
