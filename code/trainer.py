@@ -471,7 +471,7 @@ class FineGAN_trainer(object):
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
-            mask = c_mk[ix][pt]
+            mask = c_mk[pt][ix]
             xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
             xv, yv = xv.float().cuda(), yv.float().cuda()
             _sum = torch.sum(mask) + self.protect_value
