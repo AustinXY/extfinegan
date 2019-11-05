@@ -467,7 +467,7 @@ class FineGAN_trainer(object):
         return Lconc
 
     def separation_loss(self, c_mk, ix):
-        const = 0.4
+        const = 10
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
@@ -866,7 +866,10 @@ class FineGAN_evaluator(object):
 
     def print_center_pt(self, c_mk, ix):
         protect_value = 1e-8
+        const = 0.4
         li = []
+        x_li = []
+        y_li = []
         for pt in range(cfg.NUM_PARTS):
             mask = c_mk[pt][ix]
             xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
@@ -876,4 +879,17 @@ class FineGAN_evaluator(object):
             y_mean = torch.sum(mask * yv) / _sum
 
             li.append((x_mean.item(), y_mean.item()))
+            x_li.append(x_mean)
+            y_li.append(y_mean)
+
+        x_avg = sum(x_li) / cfg.NUM_PARTS
+        y_avg = sum(y_li) / cfg.NUM_PARTS
+
+        li.append((x_avg, y_avg))
         print(li)
+
+        for pt in range(cfg.NUM_PARTS):
+            x_mean = x_li[pt]
+            y_mean = y_li[pt]
+
+            print(torch.exp(-((x_mean - x_avg) ** 2 + (y_mean - y_avg) ** 2) / const))
