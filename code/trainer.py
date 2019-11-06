@@ -381,18 +381,6 @@ class FineGAN_trainer(object):
 
                 errG_total = errG_total + errG_info
 
-                # # Sparsity loss (w/ L2 normalization)
-                # weight = 100
-                # errG_sparsity = 0
-                # for pt in range(cfg.NUM_PARTS):
-                #     norm = torch.sum(self.c_mk[pt] ** 2, dim=2).view(batch_size, 1, 1, 128)
-                #     norm = torch.sqrt(torch.sum(norm, dim=3).view(batch_size, 1)).repeat(1, 128*128).view(batch_size, 1, 128, 128)
-                #     errG_sparsity = errG_sparsity + torch.sum(self.c_mk[pt] / norm) / (128 * 128 * batch_size)
-
-                # errG_sparsity = errG_sparsity * weight
-                # errG_total = errG_total + errG_sparsity
-
-
                 # concentration loss
                 weight = 1e-3
                 errG_concentration = 0
@@ -416,6 +404,12 @@ class FineGAN_trainer(object):
 
                 errG_separation = errG_separation * weight
                 errG_total = errG_total + errG_separation
+
+                # parent mask similarity loss
+                weight = 1e-1
+                pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
+                errG_pmk_simloss = pcmk_dist * weight
+                errG_total = errG_total + errG_pmk_simloss
 
 
             if flag == 0:
@@ -444,8 +438,8 @@ class FineGAN_trainer(object):
                     # summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
                     # self.summary_writer.add_summary(summary_D_class, count)
 
-                    # summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
-                    # self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
