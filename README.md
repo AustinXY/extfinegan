@@ -1,4 +1,4 @@
-**Version 2.4**
+**Version 2.4.1**
 
 added soft constraints (concentration loss; separation loss)
 
