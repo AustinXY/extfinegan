@@ -859,7 +859,7 @@ class FineGAN_evaluator(object):
 
     def print_center_pt(self, c_mk, ix):
         protect_value = 1e-8
-        const = 10
+        const = 100
         x_li = []
         y_li = []
         for pt in range(cfg.NUM_PARTS):
