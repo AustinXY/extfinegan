@@ -1,6 +1,6 @@
 **Version 2.6**
 
-added soft constraints (concentration loss; separation loss, parent child similarity loss)<\br>
+added soft constraints (concentration loss; separation loss, parent child similarity loss)<br>
 
 implemented mask incomplete loss: <\br>
 using original discriminator;<\br>
