@@ -776,7 +776,7 @@ class FineGAN_evaluator(object):
             # get diff of masks
             self.save_img_eval([], c_mk, self.save_dir)
 
-            for ix in range(1):
+            for ix in range(8):
                 self.print_center_pt(c_mk, ix)
 
 
