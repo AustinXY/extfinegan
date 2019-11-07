@@ -414,7 +414,7 @@ class FineGAN_trainer(object):
                 # mask incomplete loss
                 weight = 1e-2
                 errG_incomplete = 0
-                outputs = self.netsD[i](self.incomplete_image)
+                outputs = self.netsD[2](self.incomplete_image)
                 fake_labels = torch.zeros_like(outputs[1])
 
                 # want to classify incomplete image as fake
