@@ -503,15 +503,15 @@ class FineGAN_trainer(object):
         batch_size = self.real_fimgs[0].size(0)
 
         num_parts_li = torch.randint(1, cfg.NUM_PARTS, (batch_size,))
-        print(num_parts_li)
+        # print(num_parts_li)
         incomplete_fg_masked = torch.zeros([batch_size, 3, 128, 128]).cuda()
         opp_masks = torch.ones_like(self.c_mk[0]).cuda()
         for i in range(batch_size):
             part_perm = torch.randperm(cfg.NUM_PARTS)
-            print(part_perm)
+            # print(part_perm)
             for j in range(num_parts_li[i]):
                 pt = part_perm[j]
-                print(pt.item())
+                # print(pt.item())
                 incomplete_fg_masked[i] = incomplete_fg_masked[i] + self.c_masked[pt][i]
                 opp_masks[i] = opp_masks[i] - self.c_mk[pt][i]
 
