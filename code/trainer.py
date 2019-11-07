@@ -66,7 +66,7 @@ def load_network(gpus):
     print(netG)
 
     netsD = []
-    for i in range(4): # 4 discriminators for background, parent, part and child stage
+    for i in range(5): # 5 discriminators for background, parent, part, child, and completeness stage
         netsD.append(D_NET(i))
 
     for i in range(len(netsD)):
@@ -116,14 +116,20 @@ def define_optimizers(netG, netsD):
     for i in range(num_Ds):
         if i == 1: # Parent
             opt = optim.Adam(netsD[1].parameters(),
-            lr=cfg.TRAIN.GENERATOR_LR,
-            betas=(0.5, 0.999))
+                             lr=cfg.TRAIN.GENERATOR_LR,
+                             betas=(0.5, 0.999))
             optimizerG.append(opt)
 
         elif i == 3: # Part
             opt = optim.Adam(netsD[3].parameters(),
-            lr=cfg.TRAIN.GENERATOR_LR,
-            betas=(0.5, 0.999))
+                             lr=cfg.TRAIN.GENERATOR_LR,
+                             betas=(0.5, 0.999))
+            optimizerG.append(opt)
+
+        elif i == 4:  # Completeness
+            opt = optim.Adam(netsD[4].parameters(),
+                             lr=cfg.TRAIN.GENERATOR_LR,
+                             betas=(0.5, 0.999))
             optimizerG.append(opt)
 
         elif i == 2: # Child
@@ -244,7 +250,8 @@ class FineGAN_trainer(object):
         return fimgs, real_vfimgs, real_vcimgs, vc_code, warped_bbox
 
     def train_Dnet(self, idx, count):
-        if idx == 0 or idx == 2: # Discriminator is only trained in background and child stage. (NOT in parent stage)
+        # Discriminator is only trained in background, child and completeness stage. (NOT in parent and part stage)
+        if idx == 0 or idx == 2 or idx == 4:
             flag = count % 100
             batch_size = self.real_fimgs[0].size(0)
             criterion, criterion_one = self.criterion, self.criterion_one
@@ -256,11 +263,18 @@ class FineGAN_trainer(object):
             elif idx == 2:
                 real_imgs = self.real_cimgs[0]
 
-            fake_imgs = self.fake_imgs[idx]
+            elif idx == 4:
+                real_imgs = self.fake_imgs[2]
+
+            if idx == 0 or idx == 2:
+                fake_imgs = self.fake_imgs[idx]
+            elif idx == 4:
+                fake_imgs = self.incomplete_image
+
             netD.zero_grad()
             real_logits = netD(real_imgs)
 
-            if idx == 2:
+            if idx == 2 or idx == 4:
                 fake_labels = torch.zeros_like(real_logits[1])
                 real_labels = torch.ones_like(real_logits[1])
 
@@ -311,12 +325,12 @@ class FineGAN_trainer(object):
                 errD_fake = errD_fake_uncond
                 errD = ((errD_real + errD_fake) * cfg.TRAIN.BG_LOSS_WT) + errD_real_uncond_classi
 
-            if idx == 2:
+            if idx == 2 or idx == 4:
                 errD_real = criterion_one(real_logits[1], real_labels) # Real/Fake loss for the real image
                 errD_fake = criterion_one(fake_logits[1], fake_labels) # Real/Fake loss for the fake image
                 errD = errD_real + errD_fake
 
-            if idx == 0 or idx == 2:
+            if idx == 0 or idx == 2 or idx == 4:
                 errD.backward()
                 optD.step()
 
@@ -411,10 +425,11 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
-                # mask incomplete loss
+            # mask incomplete loss
+            elif i == 4:
                 weight = 10
                 errG_incomplete = 0
-                outputs = self.netsD[2](self.incomplete_image)
+                outputs = self.netsD[4](self.incomplete_image)
                 fake_labels = torch.zeros_like(outputs[1])
                 # want to classify incomplete image as fake
                 errG_incomplete = criterion_one(outputs[1], fake_labels)

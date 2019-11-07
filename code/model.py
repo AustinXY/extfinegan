@@ -407,12 +407,15 @@ class D_NET(nn.Module):
             self.ef_dim = cfg.FINE_GRAINED_CATEGORIES
         elif self.stg_no == 3:
             self.ef_dim = cfg.NUM_PARTS
+        elif self.stg_no == 4:
+            self.ef_dim = 1
         else:
             print("Invalid stage number. Set stage number as follows:")
             print("0 - for background stage")
             print("1 - for parent stage")
             print("2 - for child stage")
             print("3 - for part stage")
+            print("4 - for part completeness stage")
             print("...Exiting now")
             sys.exit(0)
 
@@ -474,5 +477,3 @@ class D_NET(nn.Module):
             code_pred = self.logits(h_c_code) # Predicts the parent code and child code in parent and child stage respectively
             rf_score = self.uncond_logits(x_code) # This score is not used in parent stage while training
             return [code_pred.view(-1, self.ef_dim), rf_score.view(-1)]
-
-
