@@ -411,6 +411,17 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
+                # mask incomplete loss
+                weight = 1e-2
+                errG_incomplete = 0
+                outputs = self.netsD[i](self.incomplete_image)
+                fake_labels = torch.zeros_like(outputs[1])
+
+                # want to classify incomplete image as fake
+                errG_incomplete = criterion_one(outputs[1], fake_labels)
+                errG_incomplete = errG_incomplete * weight
+                errG_total = errG_total + errG_incomplete
+
 
             if flag == 0:
                 if i == 1 or i == 2:
@@ -435,8 +446,8 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Separation_loss', errG_separation.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    # summary_D_class = summary.scalar('Part_ConsineSimilarity_loss', errG_cossim.data[0])
-                    # self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
                     summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
@@ -485,6 +496,28 @@ class FineGAN_trainer(object):
                 Lsep = Lsep + torch.exp(-((x_mean - x_mean_) ** 2 + (y_mean - y_mean_) ** 2) / const)
 
         return Lsep
+
+
+    def generate_incomplete_images(self):
+        batch_size = self.real_fimgs[0].size(0)
+
+        num_parts_li = torch.randint(1, cfg.NUM_PARTS, (batch_size,))
+        print(num_parts_li.item())
+        incomplete_fg_masked = torch.zeros([batch_size, 3, 128, 128]).cuda()
+        opp_masks = torch.ones_like(self.c_mk[0]).cuda()
+        for i in range(batch_size):
+            part_perm = torch.randperm(cfg.NUM_PARTS)
+            print(part_perm.item())
+            for j in range(num_parts_li[i]):
+                pt = part_perm[j]
+                print(pt.item())
+                incomplete_fg_masked[i] = incomplete_fg_masked[i] + self.c_masked[pt][i]
+                opp_masks[i] = opp_masks[i] - self.c_mk[pt][i]
+
+        P = self.fake_imgs[1]
+        bg_masked = torch.mul(P, opp_masks)
+        incomplete_image = incomplete_fg_masked + bg_masked
+        return incomplete_image
 
 
     def train(self):
@@ -543,6 +576,9 @@ class FineGAN_trainer(object):
 
                 # Obtain the parent code given the child code
                 self.p_code = child_to_parent(self.c_code, cfg.FINE_GRAINED_CATEGORIES, cfg.SUPER_CATEGORIES)
+
+                # generate incomplete images
+                self.incomplete_image = self.generate_incomplete_images()
 
                 # Update Discriminator networks
                 errD_total = 0
