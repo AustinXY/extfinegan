@@ -412,7 +412,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_pmk_simloss
 
                 # mask incomplete loss
-                weight = 100
+                weight = 10
                 errG_incomplete = 0
                 outputs = self.netsD[2](self.incomplete_image)
                 fake_labels = torch.zeros_like(outputs[1])
