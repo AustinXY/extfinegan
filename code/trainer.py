@@ -451,9 +451,6 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    # summary_D_class = summary.scalar('Sparsity_loss', errG_sparsity.data[0])
-                    # self.summary_writer.add_summary(summary_D_class, count)
-
                     summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
