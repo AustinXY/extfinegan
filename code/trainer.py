@@ -367,18 +367,18 @@ class FineGAN_trainer(object):
             elif i == 3: # Mutual information loss for the part stage (3)
                 errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
-                    temp_c_mk = torch.zeros_like(self.c_mk[pt])
+                    temp_c_mk = torch.zeros_like(self.c_mk[pt]).cuda()
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    for ix in range(batch_size):
-                        transform = transforms.Compose([
-                            transforms.ToPILImage(),
-                            transforms.RandomAffine(360, translate=(0.15, 0.15), scale=(0.85,1.15)),
-                            transforms.CenterCrop(128),
-                            transforms.ToTensor(),
-                        ])
-                        temp_c_mk[ix] = transform(self.c_mk[pt][ix].clone().cpu().detach())
+                    # for ix in range(batch_size):
+                    #     transform = transforms.Compose([
+                    #         transforms.ToPILImage(),
+                    #         transforms.RandomAffine(360, translate=(0.15, 0.15), scale=(0.85,1.15)),
+                    #         transforms.CenterCrop(128),
+                    #         transforms.ToTensor(),
+                    #     ])
+                    #     temp_c_mk[ix] = transform(self.c_mk[pt][ix].clone().cpu().detach()).cuda()
 
                     pred_pti = self.netsD[3](temp_c_mk)[0]
                     errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
