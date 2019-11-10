@@ -364,19 +364,25 @@ class FineGAN_trainer(object):
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total += errG_info
             elif i == 3: # Mutual information loss for the part stage (3)
-                pti_loss = []
+                errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    pred_pti = self.netsD[3](self.pt_masked[pt])[0]
-                    errG_info = criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
-                    errG_total += errG_info
+                    for ix in range(batch_size):
+                        transform = transforms.Compose([
+                            transforms.ToPILImage(),
+                            transforms.RandomAffine(20, translate=(0.15, 0.15), scale=(0.85,1.15)),
+                            transforms.CenterCrop(128),
+                            transforms.ToTensor(),
+                        ])
+                        self.c_mk[pt][ix] = transform(self.c_mk[pt][ix])
 
-                    pti_loss.append(errG_info)
+                    pred_pti = self.netsD[3](self.c_mk[pt])[0]
+                    errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
 
-            # if i > 0:
-            #     errG_total = errG_total + errG_info
+                errG_total = errG_total + errG_info
+
 
             if flag == 0:
                 if i == 1 or i == 2:
@@ -388,9 +394,8 @@ class FineGAN_trainer(object):
                     self.summary_writer.add_summary(summary_D, count)
 
                 if i == 3:
-                    for j in range(cfg.NUM_PARTS):
-                        summary_D_class = summary.scalar('Part%d_Information_loss_%d' % (j, i), pti_loss[j])
-                        self.summary_writer.add_summary(summary_D_class, count)
+                    summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
