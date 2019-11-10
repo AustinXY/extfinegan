@@ -388,6 +388,7 @@ class FineGAN_trainer(object):
                 # Mutual information loss for the part stage (3)
                 errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
+                    temp_c_mk = torch.zeros_like(self.c_mk[pt]).cuda()
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
