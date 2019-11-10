@@ -378,7 +378,7 @@ class FineGAN_trainer(object):
                             transforms.CenterCrop(128),
                             transforms.ToTensor(),
                         ])
-                        temp_c_mk[ix] = transform(self.c_mk[pt][ix].clone().detach())
+                        temp_c_mk[ix] = transform(self.c_mk[pt][ix].clone().cpu().detach())
 
                     pred_pti = self.netsD[3](temp_c_mk)[0]
                     errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
