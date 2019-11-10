@@ -364,6 +364,23 @@ def encode_parent_and_child_img(ndf): # Defines the encoder network used for par
     )
     return encode_img
 
+# Defines the encoder network used for part mask
+def encode_part_mask(ndf):
+    encode_img = nn.Sequential(
+        nn.Conv2d(1, ndf, 4, 2, 1, bias=False),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 2),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 4),
+        nn.LeakyReLU(0.2, inplace=True),
+        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+        nn.BatchNorm2d(ndf * 8),
+        nn.LeakyReLU(0.2, inplace=True)
+    )
+    return encode_img
+
 
 def encode_background_img(ndf): # Defines the encoder network used for background image
     encode_img = nn.Sequential(
@@ -408,11 +425,24 @@ class D_NET(nn.Module):
         if self.stg_no == 0:
             self.patchgan_img_code_s16 = encode_background_img(ndf)
             self.uncond_logits1 = nn.Sequential(
-            nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
-            nn.Sigmoid())
+                nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
+                nn.Sigmoid())
             self.uncond_logits2 = nn.Sequential(
-            nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
-            nn.Sigmoid())
+                nn.Conv2d(ndf * 4, 1, kernel_size=4, stride=1),
+                nn.Sigmoid())
+
+        elif self.stg_no == 3:
+            self.img_code_s16 = encode_part_mask(ndf)
+            self.img_code_s32 = downBlock(ndf * 8, ndf * 16)
+            self.img_code_s32_1 = Block3x3_leakRelu(ndf * 16, ndf * 8)
+
+            self.logits = nn.Sequential(
+                nn.Conv2d(ndf * 8, efg, kernel_size=4, stride=4))
+
+            self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
+            self.uncond_logits = nn.Sequential(
+                nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
+                nn.Sigmoid())
 
         else:
             self.img_code_s16 = encode_parent_and_child_img(ndf)
@@ -424,15 +454,16 @@ class D_NET(nn.Module):
 
             self.jointConv = Block3x3_leakRelu(ndf * 8, ndf * 8)
             self.uncond_logits = nn.Sequential(
-            nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
-            nn.Sigmoid())
-
+                nn.Conv2d(ndf * 8, 1, kernel_size=4, stride=4),
+                nn.Sigmoid())
 
     def forward(self, x_var):
         if self.stg_no == 0:
             x_code = self.patchgan_img_code_s16(x_var)
-            classi_score = self.uncond_logits1(x_code) # Background vs Foreground classification score (0 - background and 1 - foreground)
-            rf_score = self.uncond_logits2(x_code) # Real/Fake score for the background image
+            # Background vs Foreground classification score (0 - background and 1 - foreground)
+            classi_score = self.uncond_logits1(x_code)
+            # Real/Fake score for the background image
+            rf_score = self.uncond_logits2(x_code)
             return [classi_score, rf_score]
 
         elif self.stg_no > 0:
@@ -440,8 +471,10 @@ class D_NET(nn.Module):
             x_code = self.img_code_s32(x_code)
             x_code = self.img_code_s32_1(x_code)
             h_c_code = self.jointConv(x_code)
-            code_pred = self.logits(h_c_code) # Predicts the parent code and child code in parent and child stage respectively
-            rf_score = self.uncond_logits(x_code) # This score is not used in parent stage while training
+            # Predicts the parent code and child code in parent and child stage respectively
+            code_pred = self.logits(h_c_code)
+            # This score is not used in parent stage while training
+            rf_score = self.uncond_logits(x_code)
             return [code_pred.view(-1, self.ef_dim), rf_score.view(-1)]
 
 
