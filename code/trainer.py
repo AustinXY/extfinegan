@@ -15,6 +15,7 @@ import math
 from torch.autograd import Variable
 import torch.optim as optim
 import torchvision.utils as vutils
+import torchvision.transforms as transforms
 from torch.nn.functional import softmax, log_softmax
 from torch.nn.functional import cosine_similarity
 from tensorboardX import summary
