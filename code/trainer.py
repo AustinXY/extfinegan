@@ -225,7 +225,22 @@ class FineGAN_trainer(object):
         self.num_batches = len(self.data_loader)
 
         self.protect_value = 1e-8
-        self.cos = nn.CosineSimilarity(dim=1)
+        # self.cos = nn.CosineSimilarity(dim=1)
+
+        self.transform = transforms.Compose([
+            transforms.ToPILImage(),
+            # transforms.RandomRotation(30),
+            transforms.RandomChoice([
+                transforms.RandomPerspective(),
+                transforms.Compose([
+                    transforms.RandomAffine(20, translate=(0.2, 0.1), scale=(0.80, 1.15)),
+                    transforms.RandomVerticalFlip(),
+                    transforms.RandomHorizontalFlip(),
+                ]),
+            ]),
+            transforms.CenterCrop(128),
+            transforms.ToTensor(),
+        ])
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
@@ -393,16 +408,7 @@ class FineGAN_trainer(object):
                     pti_code[:, pt] = 1
 
                     for ix in range(batch_size):
-                        transform = transforms.Compose([
-                            transforms.ToPILImage(),
-                            transforms.RandomVerticalFlip(),
-                            transforms.RandomHorizontalFlip(),
-                            transforms.RandomRotation(30),
-                            transforms.RandomAffine(0, translate=(0.2, 0.1), scale=(0.80,1.15)),
-                            transforms.CenterCrop(128),
-                            transforms.ToTensor(),
-                        ])
-                        temp_c_mk[ix] = transform(self.c_mk[pt][ix].clone().cpu().detach()).cuda()
+                        temp_c_mk[ix] = self.transform(self.c_mk[pt][ix].clone().cpu().detach()).cuda()
 
                     pred_pti = self.netsD[3](self.c_mk[pt])[0]
                     errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
