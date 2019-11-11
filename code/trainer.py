@@ -470,11 +470,12 @@ class FineGAN_trainer(object):
                     _contribution_map = torch.div(self.c_mk[pt], parent_mask+self.protect_value)
                     contribution_map = torch.mul(parent_bitmask, _contribution_map)
                     _cont_mul = torch.mul(running_mul, contribution_map)
-                    _uncount_mul = torch.mul(running_mul, activated_threshold)
+                    _uncont_mul = torch.mul(running_mul, contributed_threshold)
                     running_mul = torch.where(
-                        contribution_map > contributed_threshold, _cont_mul, _uncount_mul).cuda()
+                        contribution_map > contributed_threshold, _cont_mul, _uncont_mul)
 
                 errG_overlap = torch.sum(running_mul) * weight
+
 
             # mask incomplete loss
             elif i == 4:
