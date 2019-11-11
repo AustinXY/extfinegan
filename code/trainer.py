@@ -456,7 +456,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_pmk_simloss
 
                 # overlapping loss
-                weight = 1e-3
+                weight = 1e-2
                 # pixel with greater than threshold intensity will be considered as activated
                 activated_threshold = 1e-2
                 contributed_threshold = 1e-3
