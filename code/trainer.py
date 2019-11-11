@@ -395,7 +395,9 @@ class FineGAN_trainer(object):
                     for ix in range(batch_size):
                         transform = transforms.Compose([
                             transforms.ToPILImage(),
-                            transforms.RandomAffine(30, translate=(0.15, 0.15), scale=(0.85,1.15)),
+                            transforms.RandomVerticalFlip(),
+                            transforms.RandomRotation(30),
+                            transforms.RandomAffine(0, translate=(0.2, 0.1), scale=(0.80,1.15)),
                             transforms.CenterCrop(128),
                             transforms.ToTensor(),
                         ])
