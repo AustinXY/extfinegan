@@ -458,6 +458,8 @@ class FineGAN_trainer(object):
                 # overlapping loss
                 weight = 1e-5
                 growth = math.pow(10, math.floor(count / 2000))
+                if growth > 1e4:
+                    growth = 1e4
                 weight *= growth
                 errG_overlap = 0
                 for pti in range(cfg.NUM_PARTS):
