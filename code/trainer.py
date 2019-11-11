@@ -455,6 +455,27 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
+                # overlapping loss
+                weight = 1e-3
+                # pixel with greater than threshold intensity will be considered as activated
+                activated_threshold = 1e-2
+                contributed_threshold = 1e-3
+                parent_mask = self.mk_imgs[0]
+                ones = torch.ones_like(parent_mask).cuda()
+                zeros = torch.zeros_like(parent_mask).cuda()
+                parent_bitmask = torch.where(parent_mask > activated_threshold, ones, zeros).cuda()
+                running_mul = parent_bitmask.clone()
+                for pt in range(cfg.NUM_PARTS):
+                    # percentage of contribution of each pixel of part mask (want each pixel to contribute 100%)
+                    _contribution_map = torch.div(self.c_mk[pt], parent_mask+self.protect_value)
+                    contribution_map = torch.mul(parent_bitmask, _contribution_map)
+                    _cont_mul = torch.mul(running_mul, contribution_map)
+                    _uncount_mul = torch.mul(running_mul, activated_threshold)
+                    running_mul = torch.where(
+                        contribution_map > contributed_threshold, _cont_mul, _uncount_mul).cuda()
+
+                errG_overlap = torch.sum(running_mul) * weight
+
             # mask incomplete loss
             elif i == 4:
                 weight = 10
@@ -488,6 +509,9 @@ class FineGAN_trainer(object):
                     self.summary_writer.add_summary(summary_D_class, count)
 
                     summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    self.summary_writer.add_summary(summary_D_class, count)
+
+                    summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 4:
