@@ -457,24 +457,31 @@ class FineGAN_trainer(object):
 
                 # overlapping loss
                 weight = 1e-2
-                # pixel with greater than threshold intensity will be considered as activated
-                activated_threshold = 1e-2
-                contributed_threshold = 1e-3
-                parent_mask = self.mk_imgs[0]
-                ones = torch.ones_like(parent_mask).cuda()
-                zeros = torch.zeros_like(parent_mask).cuda()
-                parent_bitmask = torch.where(parent_mask > activated_threshold, ones, zeros).cuda()
-                running_mul = parent_bitmask.clone()
-                for pt in range(cfg.NUM_PARTS):
-                    # percentage of contribution of each pixel of part mask (want each pixel to contribute 100%)
-                    _contribution_map = torch.div(self.c_mk[pt], parent_mask+self.protect_value)
-                    contribution_map = torch.mul(parent_bitmask, _contribution_map)
-                    _cont_mul = torch.mul(running_mul, contribution_map)
-                    _uncont_mul = torch.mul(running_mul, contributed_threshold)
-                    running_mul = torch.where(
-                        contribution_map > contributed_threshold, _cont_mul, _uncont_mul)
+                errG_overlap = 0
+                for pti in range(cfg.NUM_PARTS):
+                    for ptj in range(pti+1, cfg.NUM_PARTS):
+                        errG_overlap = errG_overlap + torch.sum(torch.mul(self.c_mk[pti], self.c_mk[ptj]))
+                errG_overlap = errG_overlap * weight
+                errG_total = errG_total + errG_overlap
 
-                errG_overlap = torch.sum(running_mul) * weight
+                # # pixel with greater than threshold intensity will be considered as activated
+                # activated_threshold = 1e-2
+                # contributed_threshold = 1e-3
+                # parent_mask = self.mk_imgs[0]
+                # ones = torch.ones_like(parent_mask).cuda()
+                # zeros = torch.zeros_like(parent_mask).cuda()
+                # parent_bitmask = torch.where(parent_mask > activated_threshold, ones, zeros).cuda()
+                # running_mul = parent_bitmask.clone()
+                # for pt in range(cfg.NUM_PARTS):
+                #     # percentage of contribution of each pixel of part mask (want each pixel to contribute 100%)
+                #     _contribution_map = torch.div(self.c_mk[pt], parent_mask+self.protect_value)
+                #     contribution_map = torch.mul(parent_bitmask, _contribution_map)
+                #     _cont_mul = torch.mul(running_mul, contribution_map)
+                #     _uncont_mul = torch.mul(running_mul, contributed_threshold)
+                #     running_mul = torch.where(
+                #         contribution_map > contributed_threshold, _cont_mul, _uncont_mul)
+
+                # errG_overlap = torch.sum(running_mul) * weight
 
 
             # mask incomplete loss
