@@ -227,20 +227,30 @@ class FineGAN_trainer(object):
         self.protect_value = 1e-8
         # self.cos = nn.CosineSimilarity(dim=1)
 
+        # self.transform = transforms.Compose([
+        #     transforms.ToPILImage(),
+        #     # transforms.RandomRotation(30),
+        #     transforms.RandomChoice([
+        #         transforms.RandomPerspective(),
+        #         transforms.Compose([
+        #             transforms.RandomAffine(20, translate=(0.2, 0.1), scale=(0.80, 1.15)),
+        #             transforms.RandomVerticalFlip(),
+        #             transforms.RandomHorizontalFlip(),
+        #         ]),
+        #     ]),
+        #     transforms.CenterCrop(128),
+        #     transforms.ToTensor(),
+        # ])
+
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
-            # transforms.RandomRotation(30),
-            transforms.RandomChoice([
-                transforms.RandomPerspective(),
-                transforms.Compose([
-                    transforms.RandomAffine(20, translate=(0.2, 0.1), scale=(0.80, 1.15)),
-                    transforms.RandomVerticalFlip(),
-                    transforms.RandomHorizontalFlip(),
-                ]),
-            ]),
+            transforms.RandomAffine(20, translate=(0.2, 0.1), scale=(0.80, 1.15)),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomHorizontalFlip(),
             transforms.CenterCrop(128),
             transforms.ToTensor(),
         ])
+
 
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
