@@ -6,5 +6,5 @@ implemented mask incomplete loss: <br>
 using original discriminator;<br>
 discriminator doesn't see mask incomplete image while training;<br>
 
-
+![](1.png)
 ![](v2.png)
