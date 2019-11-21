@@ -1,4 +1,4 @@
-**Version 2.6.1**
+**Version 2.6.1.2**
 
 added soft constraints (overlapping loss)<br>
 
