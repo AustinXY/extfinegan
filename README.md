@@ -6,5 +6,10 @@ implemented mask incomplete loss: <br>
 using new discriminator;<br>
 discriminator uses complete image as real sample;<br>
 
-![](ptmk.png)
+equivariance loss useing only affine transformation:
+![](1.png)
+
+equivariance loss useing only affine transformation + vertical and horizontal flip:
+![](2.png)
+
 ![](v2.png)
