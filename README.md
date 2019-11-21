@@ -1,4 +1,4 @@
-**Version 2.6.1**
+**Version 2.6.1.1**
 
 added soft constraints (concentration loss; separation loss, parent child similarity loss)<br>
 
