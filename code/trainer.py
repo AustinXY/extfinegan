@@ -437,8 +437,8 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 4:
                     summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data[0])
