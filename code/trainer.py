@@ -395,35 +395,18 @@ class FineGAN_trainer(object):
 
                 errG_total = errG_total + errG_info
 
-                # concentration loss
-                weight = 2e-4
-                errG_concentration = 0
-                for pt in range(cfg.NUM_PARTS):
-                    Lconc_batch = 0
-                    for ix in range(batch_size):
-                        mask = self.c_mk[pt][ix].view(128, 128)
-                        Lconc_batch = Lconc_batch + self.concentration_loss(mask) / (128 * 128 * batch_size)
-
-                    errG_concentration = errG_concentration + Lconc_batch
-
-                errG_concentration = errG_concentration * weight
-                errG_total = errG_total + errG_concentration
-
-                # separation loss
-                weight = 2
-                errG_separation = 0
-                for ix in range(batch_size):
-                    Lsep_batch = self.separation_loss(self.c_mk, ix)
-                    errG_separation = errG_separation + Lsep_batch
-
-                errG_separation = errG_separation * weight
-                errG_total = errG_total + errG_separation
-
-                # parent mask similarity loss
-                weight = 1e-1
-                pcmk_dist = torch.dist(self.mk_imgs[0], self.mk_imgs[1])
-                errG_pmk_simloss = pcmk_dist * weight
-                errG_total = errG_total + errG_pmk_simloss
+                # overlapping loss
+                weight = 1e-5
+                growth = math.pow(10, math.floor(count / 2000))
+                if growth > 1e4:
+                    growth = 1e4
+                weight *= growth
+                errG_overlap = 0
+                for pti in range(cfg.NUM_PARTS):
+                    for ptj in range(pti+1, cfg.NUM_PARTS):
+                        errG_overlap = errG_overlap + torch.sum(torch.mul(self.c_mk[pti], self.c_mk[ptj]))
+                errG_overlap = errG_overlap * weight
+                errG_total = errG_total + errG_overlap
 
             # mask incomplete loss
             elif i == 4:
@@ -451,10 +434,7 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
-
-                    summary_D_class = summary.scalar('Part_Separation_loss', errG_separation.data[0])
+                    summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
                     summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
