@@ -6,5 +6,5 @@ implemented mask incomplete loss: <br>
 using new discriminator;<br>
 discriminator uses complete image as real sample;<br>
 
-
+![](1.png)
 ![](v2.png)
