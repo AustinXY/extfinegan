@@ -455,18 +455,18 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
-                # overlapping loss
-                weight = 1e-5
-                growth = math.pow(10, math.floor(count / 2000))
-                if growth > 1e4:
-                    growth = 1e4
-                weight *= growth
-                errG_overlap = 0
-                for pti in range(cfg.NUM_PARTS):
-                    for ptj in range(pti+1, cfg.NUM_PARTS):
-                        errG_overlap = errG_overlap + torch.sum(torch.mul(self.c_mk[pti], self.c_mk[ptj]))
-                errG_overlap = errG_overlap * weight
-                errG_total = errG_total + errG_overlap
+                # # overlapping loss
+                # weight = 1e-5
+                # growth = math.pow(10, math.floor(count / 2000))
+                # if growth > 1e4:
+                #     growth = 1e4
+                # weight *= growth
+                # errG_overlap = 0
+                # for pti in range(cfg.NUM_PARTS):
+                #     for ptj in range(pti+1, cfg.NUM_PARTS):
+                #         errG_overlap = errG_overlap + torch.sum(torch.mul(self.c_mk[pti], self.c_mk[ptj]))
+                # errG_overlap = errG_overlap * weight
+                # errG_total = errG_total + errG_overlap
 
                 # # pixel with greater than threshold intensity will be considered as activated
                 # activated_threshold = 1e-2
@@ -523,8 +523,8 @@ class FineGAN_trainer(object):
                     summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
-                    self.summary_writer.add_summary(summary_D_class, count)
+                    # summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
+                    # self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 4:
                     summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data[0])
