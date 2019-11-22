@@ -244,7 +244,7 @@ class FineGAN_trainer(object):
 
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.RandomAffine(20, translate=(0.2, 0.1), scale=(0.80, 1.15)),
+            transforms.RandomAffine(90, translate=(0.2, 0.1), scale=(0.80, 1.15)),
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
             transforms.CenterCrop(128),
