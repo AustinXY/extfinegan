@@ -2,6 +2,10 @@
 
 added soft constraints (concentration loss; separation loss, parent child similarity loss, equivariance loss)<br>
 
+concentration loss: encourage mask to concentrate
+separation loss: encourage center of mass to separate
+equivariance loss: translate mask before feeding into discriminater
+
 implemented mask incomplete loss: <br>
 using new discriminator;<br>
 discriminator uses complete image as real sample;<br>
