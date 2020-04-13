@@ -252,6 +252,7 @@ class FineGAN_trainer(object):
         ])
 
 
+
     def prepare_data(self, data):
         fimgs, cimgs, c_code, _, warped_bbox = data
 
@@ -410,17 +411,20 @@ class FineGAN_trainer(object):
                 errG_info = criterion_class(pred_c, torch.nonzero(c_code.long())[:,1])
                 errG_total = errG_total+ errG_info
             elif i == 3:
+
+                c_mk = self.centralize_c_mk().cuda()
+
                 # Mutual information loss for the part stage (3)
                 errG_info = 0
                 for pt in range(cfg.NUM_PARTS):
-                    temp_c_mk = torch.zeros_like(self.c_mk[pt]).cuda()
+                    # temp_c_mk = torch.zeros_like(self.c_mk[pt]).cuda()
                     pti_code = torch.zeros([batch_size, cfg.NUM_PARTS]).cuda()
                     pti_code[:, pt] = 1
 
-                    for ix in range(batch_size):
-                        temp_c_mk[ix] = self.transform(self.c_mk[pt][ix].clone().cpu().detach()).cuda()
+                    # for ix in range(batch_size):
+                    #     temp_c_mk[ix] = self.transform(self.c_mk[pt][ix].clone().cpu().detach()).cuda()
 
-                    pred_pti = self.netsD[3](self.c_mk[pt])[0]
+                    pred_pti = self.netsD[3](c_mk[pt])[0]
                     errG_info = errG_info + criterion_class(pred_pti, torch.nonzero(pti_code.long())[:, 1])
 
                 errG_total = errG_total + errG_info
@@ -431,7 +435,7 @@ class FineGAN_trainer(object):
                 for pt in range(cfg.NUM_PARTS):
                     Lconc_batch = 0
                     for ix in range(batch_size):
-                        mask = self.c_mk[pt][ix].view(128, 128)
+                        mask = c_mk[pt][ix].view(128, 128)
                         Lconc_batch = Lconc_batch + self.concentration_loss(mask) / (128 * 128 * batch_size)
 
                     errG_concentration = errG_concentration + Lconc_batch
@@ -443,7 +447,7 @@ class FineGAN_trainer(object):
                 weight = 2
                 errG_separation = 0
                 for ix in range(batch_size):
-                    Lsep_batch = self.separation_loss(self.c_mk, ix)
+                    Lsep_batch = self.separation_loss(c_mk, ix)
                     errG_separation = errG_separation + Lsep_batch
 
                 errG_separation = errG_separation * weight
@@ -464,7 +468,7 @@ class FineGAN_trainer(object):
                 # errG_overlap = 0
                 # for pti in range(cfg.NUM_PARTS):
                 #     for ptj in range(pti+1, cfg.NUM_PARTS):
-                #         errG_overlap = errG_overlap + torch.sum(torch.mul(self.c_mk[pti], self.c_mk[ptj]))
+                #         errG_overlap = errG_overlap + torch.sum(torch.mul(c_mk[pti], c_mk[ptj]))
                 # errG_overlap = errG_overlap * weight
                 # errG_total = errG_total + errG_overlap
 
@@ -515,6 +519,37 @@ class FineGAN_trainer(object):
             self.optimizerG[myit].step()
         return errG_total
 
+    def centralize_mask(self, mask):
+        xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
+        xv, yv = xv.float().cuda(), yv.float().cuda()
+        _sum = torch.sum(mask) + self.protect_value
+        x_mean = (torch.sum(mask * xv) / _sum).round().int()
+        y_mean = (torch.sum(mask * yv) / _sum).round().int()
+
+        ctr_mask = mask.detach()
+
+        self.centralize_mask = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.
+            transforms.ToTensor(),
+        ])
+
+        dx = x_mean - 63
+        dy = y_mean - 63
+
+        pil_img = transforms.ToPILImage()(ctr_mask)
+        pil_img = transforms.functional.affine(pil_img, angle=0, translate=(dx, dy), scale=1, shear=0)
+        ctr_mask = transforms.ToTensor()(pil_img)
+        return ctr_mask
+
+    def centralize_c_mk(self):
+        c_mk = torch.zeros_like(self.c_mk)
+        for pt in range(cfg.NUM_PARTS):
+            for ix in range(batch_size):
+                c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix])
+        return c_mk
+
+
 
     def concentration_loss(self, mask):
         xv, yv = torch.meshgrid([torch.arange(128), torch.arange(128)])
@@ -522,7 +557,6 @@ class FineGAN_trainer(object):
         _sum = torch.sum(mask) + self.protect_value
         x_mean = torch.sum(mask * xv) / _sum
         y_mean = torch.sum(mask * yv) / _sum
-
         x_variance = torch.sum((xv - x_mean).pow(2).float() * mask) / _sum
         y_variance = torch.sum((yv - y_mean).pow(2).float() * mask) / _sum
 
