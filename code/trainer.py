@@ -543,6 +543,7 @@ class FineGAN_trainer(object):
         return ctr_mask
 
     def centralize_c_mk(self):
+        batch_size = self.c_mk[0].size(0)
         c_mk = []
         for pt in range(cfg.NUM_PARTS):
             c_mk.append(torch.zeros_like(self.c_mk[pt]))
