@@ -412,7 +412,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total+ errG_info
             elif i == 3:
 
-                c_mk = self.centralize_c_mk().cuda()
+                c_mk = self.centralize_c_mk()
 
                 # Mutual information loss for the part stage (3)
                 errG_info = 0
@@ -543,10 +543,15 @@ class FineGAN_trainer(object):
         return ctr_mask
 
     def centralize_c_mk(self):
-        c_mk = torch.zeros_like(self.c_mk)
+        c_mk = []
         for pt in range(cfg.NUM_PARTS):
+            c_mk.append(torch.zeros_like(self.c_mk[pt]))
             for ix in range(batch_size):
                 c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix])
+
+        for pt in range(cfg.NUM_PARTS):
+                c_mk[pt] = c_mk[pt].cuda()
+
         return c_mk
 
 
