@@ -548,7 +548,7 @@ class FineGAN_trainer(object):
         for pt in range(cfg.NUM_PARTS):
             c_mk.append(torch.zeros_like(self.c_mk[pt]))
             for ix in range(batch_size):
-                c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix])
+                c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix].cpu())
 
         for pt in range(cfg.NUM_PARTS):
                 c_mk[pt] = c_mk[pt].cuda()
