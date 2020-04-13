@@ -362,11 +362,11 @@ class FineGAN_trainer(object):
                 optD.step()
 
             if flag == 0:
-                summary_D = summary.scalar('D_loss%d' % idx, errD.data[0])
+                summary_D = summary.scalar('D_loss%d' % idx, errD.data.item())
                 self.summary_writer.add_summary(summary_D, count)
-                summary_D_real = summary.scalar('D_loss_real_%d' % idx, errD_real.data[0])
+                summary_D_real = summary.scalar('D_loss_real_%d' % idx, errD_real.data.item())
                 self.summary_writer.add_summary(summary_D_real, count)
-                summary_D_fake = summary.scalar('D_loss_fake_%d' % idx, errD_fake.data[0])
+                summary_D_fake = summary.scalar('D_loss_fake_%d' % idx, errD_fake.data.item())
                 self.summary_writer.add_summary(summary_D_fake, count)
 
             return errD
@@ -486,32 +486,32 @@ class FineGAN_trainer(object):
 
             if flag == 0:
                 if i == 1 or i == 2:
-                    summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data[0])
+                    summary_D_class = summary.scalar('Information_loss_%d' % i, errG_info.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 0 or i == 2:
-                    summary_D = summary.scalar('G_loss%d' % i, errG.data[0])
+                    summary_D = summary.scalar('G_loss%d' % i, errG.data.item())
                     self.summary_writer.add_summary(summary_D, count)
 
                 if i == 3:
                     # print(count)
-                    summary_D_class = summary.scalar('Part_Information_loss', errG_info.data[0])
+                    summary_D_class = summary.scalar('Part_Information_loss', errG_info.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data[0])
+                    summary_D_class = summary.scalar('Part_Concentraion_loss', errG_concentration.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Part_Separation_loss', errG_separation.data[0])
+                    summary_D_class = summary.scalar('Part_Separation_loss', errG_separation.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data[0])
+                    summary_D_class = summary.scalar('Parent_child_masks_similarity_loss', errG_pmk_simloss.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
-                    # summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data[0])
+                    # summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data.item())
                     # self.summary_writer.add_summary(summary_D_class, count)
 
                 if i == 4:
-                    summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data[0])
+                    summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data.item())
                     self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
@@ -708,7 +708,7 @@ class FineGAN_trainer(object):
                          Loss_D: %.2f Loss_G: %.2f Time: %.2fs
                       '''
                   % (epoch, self.max_epoch, self.num_batches,
-                     errD_total.data[0], errG_total.data[0],
+                     errD_total.data.item(), errG_total.data.item(),
                      end_t - start_t))
 
         save_model(self.netG, avg_param_G, self.netsD, count, self.model_dir)
@@ -809,7 +809,7 @@ class FineGAN_trainer(object):
         #                      Loss_D: %.2f Loss_G: %.2f Time: %.2fs
         #                   '''
         #               % (count, cfg.TRAIN.HARDNEG_MAX_ITER, self.num_batches,
-        #                  errD_total.data[0], errG_total.data[0],
+        #                  errD_total.data.item(), errG_total.data.item(),
         #                  end_t - start_t))
 
         #     if (count == cfg.TRAIN.HARDNEG_MAX_ITER): # Hard negative training complete
