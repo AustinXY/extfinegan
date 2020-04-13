@@ -526,7 +526,7 @@ class FineGAN_trainer(object):
         x_mean = (torch.sum(mask * xv) / _sum).round().int()
         y_mean = (torch.sum(mask * yv) / _sum).round().int()
 
-        ctr_mask = mask.detach()
+        ctr_mask = mask.detach().cpu()
 
         self.centralize_mask = transforms.Compose([
             transforms.ToPILImage(),
@@ -548,7 +548,7 @@ class FineGAN_trainer(object):
         for pt in range(cfg.NUM_PARTS):
             c_mk.append(torch.zeros_like(self.c_mk[pt]))
             for ix in range(batch_size):
-                c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix].cpu())
+                c_mk[pt][ix] = self.centralize_mask(self.c_mk[pt][ix])
 
         for pt in range(cfg.NUM_PARTS):
                 c_mk[pt] = c_mk[pt].cuda()
