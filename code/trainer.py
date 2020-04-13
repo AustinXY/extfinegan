@@ -528,12 +528,6 @@ class FineGAN_trainer(object):
 
         ctr_mask = mask.detach().cpu()
 
-        self.centralize_mask = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.
-            transforms.ToTensor(),
-        ])
-
         dx = x_mean - 63
         dy = y_mean - 63
 
