@@ -510,9 +510,9 @@ class FineGAN_trainer(object):
                     # summary_D_class = summary.scalar('Part_Overlapping_loss', errG_overlap.data.item())
                     # self.summary_writer.add_summary(summary_D_class, count)
 
-                if i == 4:
-                    summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data.item())
-                    self.summary_writer.add_summary(summary_D_class, count)
+                # if i == 4:
+                #     summary_D_class = summary.scalar('mask_incomplete_loss', errG_incomplete.data.item())
+                #     self.summary_writer.add_summary(summary_D_class, count)
 
         errG_total.backward()
         for myit in range(len(self.netsD)):
