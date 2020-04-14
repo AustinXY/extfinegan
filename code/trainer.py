@@ -444,7 +444,7 @@ class FineGAN_trainer(object):
                 errG_total = errG_total + errG_concentration
 
                 # separation loss
-                weight = 2
+                weight = 2e-1
                 errG_separation = 0
                 for ix in range(batch_size):
                     Lsep_batch = self.separation_loss(c_mk, ix)
@@ -459,29 +459,29 @@ class FineGAN_trainer(object):
                 errG_pmk_simloss = pcmk_dist * weight
                 errG_total = errG_total + errG_pmk_simloss
 
-                # # overlapping loss
-                # weight = 1e-5
-                # growth = math.pow(10, math.floor(count / 2000))
-                # if growth > 1e4:
-                #     growth = 1e4
-                # weight *= growth
-                # errG_overlap = 0
-                # for pti in range(cfg.NUM_PARTS):
-                #     for ptj in range(pti+1, cfg.NUM_PARTS):
-                #         errG_overlap = errG_overlap + torch.sum(torch.mul(c_mk[pti], c_mk[ptj]))
-                # errG_overlap = errG_overlap * weight
-                # errG_total = errG_total + errG_overlap
+                # overlapping loss
+                weight = 1e-5
+                growth = math.pow(10, math.floor(count / 2000))
+                if growth > 1e4:
+                    growth = 1e4
+                weight *= growth
+                errG_overlap = 0
+                for pti in range(cfg.NUM_PARTS):
+                    for ptj in range(pti+1, cfg.NUM_PARTS):
+                        errG_overlap = errG_overlap + torch.sum(torch.mul(c_mk[pti], c_mk[ptj]))
+                errG_overlap = errG_overlap * weight
+                errG_total = errG_total + errG_overlap
 
             # mask incomplete loss
-            elif i == 4:
-                weight = 10
-                errG_incomplete = 0
-                outputs = self.netsD[4](self.incomplete_image)
-                fake_labels = torch.zeros_like(outputs[1])
-                # want to classify incomplete image as fake
-                errG_incomplete = criterion_one(outputs[1], fake_labels)
-                errG_incomplete = errG_incomplete * weight
-                errG_total = errG_total + errG_incomplete
+            # elif i == 4:
+            #     weight = 10
+            #     errG_incomplete = 0
+            #     outputs = self.netsD[4](self.incomplete_image)
+            #     fake_labels = torch.zeros_like(outputs[1])
+            #     # want to classify incomplete image as fake
+            #     errG_incomplete = criterion_one(outputs[1], fake_labels)
+            #     errG_incomplete = errG_incomplete * weight
+            #     errG_total = errG_total + errG_incomplete
 
 
             if flag == 0:
